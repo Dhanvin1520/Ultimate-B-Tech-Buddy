@@ -54,8 +54,8 @@ export default function Spotify() {
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">Now Playing</h2>
         <div className="bg-gray-700 p-4 rounded-lg">
-          <h3 className="text-white font-medium">{SONGS[currentSong].title}</h3>
-          <p className="text-gray-400">{SONGS[currentSong].artist}</p>
+          {/* <h3 className="text-white font-medium">{SONGS[currentSong].title}</h3>
+          <p className="text-gray-400">{SONGS[currentSong].artist}</p> */}
         </div>
       </div>
 
