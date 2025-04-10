@@ -57,7 +57,7 @@ import {
           className="flex items-center gap-3 px-2 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors mt-auto"
         >
           <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <span>LogOut</span>
         </button>
       </div>
     );
