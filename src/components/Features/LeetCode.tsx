@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 
 interface Problem {
@@ -36,7 +36,8 @@ const SAMPLE_PROBLEMS: Problem[] = [
 ];
 
 export default function LeetCode() {
-  const [problems, setProblems] = useState<Problem[]>(SAMPLE_PROBLEMS);
+
+const [problems] = useState<Problem[]>(SAMPLE_PROBLEMS);
   const [filter, setFilter] = useState<string>('all');
 
   const filteredProblems = problems.filter(problem => 
