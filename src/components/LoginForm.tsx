@@ -6,15 +6,40 @@ export default function LoginForm() {
   const [isGuest, setIsGuest] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({ email: '', password: '' });
+
   const { login, loginAsGuest } = useAuthStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isGuest) {
       loginAsGuest();
-    } else {
-      login(email, password);
+      return;
     }
+
+    let hasError = false;
+    const newErrors = { email: '', password: '' };
+
+    if (!validateEmail(email)) {
+      newErrors.email = 'Please enter a valid email address.';
+      hasError = true;
+    }
+
+    if (password.trim().length === 0) {
+      newErrors.password = 'Password is required.';
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+
+    if (hasError) return;
+
+    login(email, password);
   };
 
   return (
@@ -37,6 +62,7 @@ export default function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-white/5 border border-gray-200/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
               />
+              {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email}</p>}
             </div>
             <div>
               <input
@@ -46,6 +72,7 @@ export default function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-white/5 border border-gray-200/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-white"
               />
+              {errors.password && <p className="text-sm text-red-400 mt-1">{errors.password}</p>}
             </div>
           </>
         )}
@@ -61,7 +88,10 @@ export default function LoginForm() {
         <div className="text-center">
           <button
             type="button"
-            onClick={() => setIsGuest(!isGuest)}
+            onClick={() => {
+              setIsGuest(!isGuest);
+              setErrors({ email: '', password: '' });
+            }}
             className="text-blue-400 hover:text-blue-500 text-sm"
           >
             {isGuest ? 'Have an account? Login' : 'Continue as Guest'}
