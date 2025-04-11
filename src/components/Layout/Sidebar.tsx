@@ -110,10 +110,10 @@ export default function Sidebar() {
           <span className="text-white font-semibold">BTech Buddy</span>
         </div>
         <button
-          onClick={() => setIsMobileMenuOpen(true)}
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
           className="text-gray-300 hover:text-white"
         >
-          <Menu className="w-6 h-6" />
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 

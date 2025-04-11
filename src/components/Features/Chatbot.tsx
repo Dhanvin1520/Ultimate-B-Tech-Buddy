@@ -76,26 +76,26 @@ export default function Chatbot() {
   };
 
   return (
-    <div className={`fixed bottom-6 right-10 w-[30rem] bg-[#111827]/95 backdrop-blur-md border border-orange-300 rounded-2xl shadow-lg transition-all duration-300 transform ${isExpanded ? 'h-[42rem] scale-[1.02]' : 'h-16'} hover:scale-[1.02]`}>
+    <div className={`fixed bottom-4 sm:bottom-6 right-4 sm:right-10 left-4 sm:left-auto w-full sm:w-[30rem] max-w-[30rem] bg-[#111827]/95 backdrop-blur-md border border-orange-300 rounded-2xl shadow-lg transition-all duration-300 transform ${isExpanded ? 'max-h-[90vh] scale-[1.02]' : 'h-16'} hover:scale-[1.02] z-50`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full h-16 px-6 flex items-center justify-between bg-gradient-to-r from-blue-500 via-white-400 to-amber-300 text-white rounded-t-2xl"
+        className="w-full h-16 px-4 sm:px-6 flex items-center justify-between bg-gradient-to-r from-blue-500 via-white-400 to-amber-300 text-white rounded-t-2xl"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">
             <Bot className="text-orange-600 w-6 h-6" />
           </div>
-          <span className="text-xl font-semibold tracking-wide">BTech Buddy AI</span>
+          <span className="text-lg sm:text-xl font-semibold tracking-wide">BTech Buddy AI</span>
         </div>
         <ChevronUp className={`w-6 h-6 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
 
       {isExpanded && (
         <div className="h-[calc(100%-4rem)] flex flex-col">
-          <div className="flex-1 p-5 overflow-y-auto space-y-5 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent">
+          <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex items-start gap-3 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
-                <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-orange-100 flex items-center justify-center">
                   {msg.isUser ? (
                     <UserIcon className="w-5 h-5 text-orange-400" />
                   ) : (
@@ -103,7 +103,7 @@ export default function Chatbot() {
                   )}
                 </div>
                 <div
-                  className={`max-w-[70%] p-3 rounded-xl transition-all duration-300 ${
+                  className={`max-w-[75%] p-2 sm:p-3 rounded-xl transition-all duration-300 ${
                     msg.isUser
                       ? 'bg-zinc-800 text-white'
                       : 'bg-gradient-to-br from-orange-100 to-amber-200 text-black'
@@ -125,14 +125,14 @@ export default function Chatbot() {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 border-t border-gray-700 bg-[#1f2937]">
-            <div className="flex gap-3">
+          <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-gray-700 bg-[#1f2937]">
+            <div className="flex gap-2 sm:gap-3">
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 bg-zinc-900 text-white rounded-xl border border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-300 transition"
+                className="flex-1 px-3 py-2 sm:px-4 bg-zinc-900 text-white rounded-xl border border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-300 transition"
               />
               <button
                 type="submit"
