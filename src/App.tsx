@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Background from './components/Background';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Layout/Dashboard';

@@ -34,7 +34,7 @@ export default function Sidebar() {
     { icon: <FileText className="w-5 h-5" />, label: 'Resume' },
     { icon: <Gamepad2 className="w-5 h-5" />, label: 'Games' },
     { icon: <MessageSquare className="w-5 h-5" />, label: 'Chat' },
-    { icon: <Settings className="w-5 h-5" />, label: 'Settings' },
+
   ];
 
   const SidebarContent = ({ showCloseBtn = false }: { showCloseBtn?: boolean }) => (

@@ -13,7 +13,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Welcome to the community chat!',
+      text: 'Welcome to the community chat! stay tuned its coming',
       userName: 'System',
       timestamp: new Date(),
     },
