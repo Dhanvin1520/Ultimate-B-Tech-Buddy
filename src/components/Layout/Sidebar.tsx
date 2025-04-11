@@ -9,8 +9,6 @@ import {
   Gamepad2,
   MessageSquare,
   Timer as TimerIcon,
-  Sun,
-  Moon,
   Menu,
   X,
 } from 'lucide-react';
@@ -23,8 +21,6 @@ export default function Sidebar() {
   const {
     activeSection,
     setActiveSection,
-    darkMode,
-    toggleDarkMode,
   } = useDashboardStore();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,28 +38,20 @@ export default function Sidebar() {
   ];
 
   const SidebarContent = ({ showCloseBtn = false }: { showCloseBtn?: boolean }) => (
-    <div className="h-full w-64 bg-gray-800 dark:bg-gray-900 text-white flex flex-col">
+    <div className="h-full w-64 bg-gray-900 text-white flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
           <span className="font-semibold">BTech Buddy</span>
         </div>
-        <div className="flex items-center gap-2">
+        {showCloseBtn && (
           <button
-            onClick={toggleDarkMode}
+            onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
           >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <X className="w-5 h-5" />
           </button>
-          {showCloseBtn && (
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       <nav className="flex-1 p-4 overflow-y-auto">
@@ -104,7 +92,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Topbar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-800 dark:bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
           <span className="text-white font-semibold">BTech Buddy</span>
@@ -124,7 +112,7 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed top-0 left-0 w-64 h-full bg-gray-800 dark:bg-gray-900 z-50 shadow-lg">
+        <div className="md:hidden fixed top-0 left-0 w-64 h-full bg-gray-900 z-50 shadow-lg">
           <SidebarContent showCloseBtn />
         </div>
       )}

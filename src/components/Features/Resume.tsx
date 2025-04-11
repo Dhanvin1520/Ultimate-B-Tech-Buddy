@@ -3,7 +3,7 @@ import { FileText, Download } from 'lucide-react';
 export default function Resume() {
   const resumeLinks = [
     {
-      title: "Template(designed by me)",
+      title: "Template",
       description: "Perfect for freshers can generate and downlaod the resume(open the link) ",
       url: "https://vin-resume-builder-667cae.netlify.app/"
     },
@@ -11,7 +11,7 @@ export default function Resume() {
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl">
-      <h2 className="text-xl font-semibold text-white mb-6">Resume Builder</h2>
+      <h2 className="text-xl font-semibold text-white mb-6">Resume Builder-Designed by Me </h2>
       
       <div className="grid gap-4">
         {resumeLinks.map((resume, index) => (

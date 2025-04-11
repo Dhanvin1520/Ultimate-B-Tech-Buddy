@@ -11,7 +11,8 @@ import Resume from '../Features/Resume';
 import Chatbot from '../Features/Chatbot';
 
 export default function Dashboard() {
-  const { activeSection, darkMode } = useDashboardStore();
+  // Removed darkMode from the store; only activeSection is used.
+  const { activeSection } = useDashboardStore();
 
   const renderSection = () => {
     switch (activeSection) {
@@ -26,21 +27,21 @@ export default function Dashboard() {
       case 'LeetCode':
         return <LeetCode />;
       case 'Spotify':
-        return <Spotify/>;
+        return <Spotify />;
       case 'Resume':
         return <Resume />;
       case 'Chat':
         return <Chat />;
       case 'Games':
         return (
-          <div className="bg-gray-800 dark:bg-gray-700 p-6 rounded-xl">
+          <div className="bg-gray-800 p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4 text-white">Games</h2>
             <p className="text-gray-400">Games section coming soon...</p>
           </div>
         );
       default:
         return (
-          <div className="bg-gray-800 dark:bg-gray-700 p-6 rounded-xl">
+          <div className="bg-gray-800 p-6 rounded-xl">
             <h2 className="text-xl font-semibold mb-4 text-white">{activeSection}</h2>
             <p className="text-gray-400">Coming soon...</p>
           </div>
@@ -49,10 +50,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+    // The outer container is now always dark.
+    <div className="min-h-screen dark">
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 p-8 bg-gray-100 dark:bg-gray-900">
+        <main className="flex-1 p-8 bg-gray-900">
           {renderSection()}
         </main>
         <Chatbot />
