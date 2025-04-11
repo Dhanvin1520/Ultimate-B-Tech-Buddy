@@ -42,11 +42,11 @@ export default function Sidebar() {
   ];
 
   const SidebarContent = ({ showCloseBtn = false }) => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-800 dark:bg-gray-900 text-white">
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
-          <span className="font-semibold text-white">BTech Buddy</span>
+          <span className="font-semibold">BTech Buddy</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -73,7 +73,7 @@ export default function Sidebar() {
               <button
                 onClick={() => {
                   setActiveSection(item.label);
-                  setIsMobileMenuOpen(false); // Close drawer on item click
+                  setIsMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                   activeSection === item.label
@@ -103,16 +103,11 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-gray-800 dark:bg-gray-900 min-h-screen">
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile Top Navbar */}
-      <div className="md:hidden flex items-center justify-between bg-gray-800 dark:bg-gray-900 p-4">
+      {/* Topbar for Mobile */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gray-800 dark:bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
-          <span className="font-semibold text-white">BTech Buddy</span>
+          <span className="text-white font-semibold">BTech Buddy</span>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(true)}
@@ -122,10 +117,15 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Mobile Sidebar Drawer with Cross */}
+      {/* Sidebar for desktop */}
+      <aside className="hidden md:flex w-64 fixed left-0 top-0 bottom-0 z-30 shadow-lg">
+        <SidebarContent />
+      </aside>
+
+      {/* Sidebar for mobile */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed top-0 left-0 w-64 h-full bg-gray-800 dark:bg-gray-900 z-50 shadow-lg">
-          <SidebarContent showCloseBtn={true} />
+          <SidebarContent showCloseBtn />
         </div>
       )}
     </>

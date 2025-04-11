@@ -79,7 +79,7 @@ export default function Chatbot() {
     <div className={`fixed bottom-6 right-10 w-[30rem] bg-[#111827]/95 backdrop-blur-md border border-orange-300 rounded-2xl shadow-lg transition-all duration-300 transform ${isExpanded ? 'h-[42rem] scale-[1.02]' : 'h-16'} hover:scale-[1.02]`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full h-16 px-6 flex items-center justify-between bg-gradient-to-r from-yellow-500 via-white-400 to-amber-300 text-white rounded-t-2xl"
+        className="w-full h-16 px-6 flex items-center justify-between bg-gradient-to-r from-blue-500 via-white-400 to-amber-300 text-white rounded-t-2xl"
       >
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center">

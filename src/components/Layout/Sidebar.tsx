@@ -41,12 +41,12 @@ export default function Sidebar() {
     { icon: <Settings className="w-5 h-5" />, label: 'Settings' },
   ];
 
-  const SidebarContent = ({ showCloseBtn = false }) => (
-    <div className="flex flex-col h-full">
+  const SidebarContent = ({ showCloseBtn = false }: { showCloseBtn?: boolean }) => (
+    <div className="h-full w-64 bg-gray-800 dark:bg-gray-900 text-white flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
-          <span className="font-semibold text-white">BTech Buddy</span>
+          <span className="font-semibold">BTech Buddy</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -58,7 +58,7 @@ export default function Sidebar() {
           {showCloseBtn && (
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="md:hidden p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -103,8 +103,8 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Topbar fixed for mobile */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-gray-800 dark:bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
+      {/* Mobile Topbar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-800 dark:bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
           <span className="text-white font-semibold">BTech Buddy</span>
@@ -117,12 +117,12 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Sidebar for desktop */}
-      <aside className="hidden md:flex w-64 bg-gray-800 dark:bg-gray-900 min-h-screen fixed left-0 top-0 z-30">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block w-64 h-screen">
         <SidebarContent />
-      </aside>
+      </div>
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed top-0 left-0 w-64 h-full bg-gray-800 dark:bg-gray-900 z-50 shadow-lg">
           <SidebarContent showCloseBtn />
