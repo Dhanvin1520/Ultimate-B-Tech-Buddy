@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/drei": "^10.0.6",
     "@react-three/fiber": "^9.1.2",
+    "axios": "^1.8.4",
     "date-fns": "^4.1.0",
     "gsap": "^3.12.7",
     "lucide-react": "^0.487.0",
