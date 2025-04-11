@@ -1,61 +1,83 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
 
-const SONGS = [
+type Song = {
+  id: number;
+  title: string;
+  artist: string;
+  url: string;
+};
+
+const SONGS: Song[] = [
   {
     id: 1,
-    title: "Peaceful Piano",
-    artist: "Study Music",
-    url: "https://example.com/music1.mp3"
+    title: "Focus Flow",
+    artist: "Bensound",
+    url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3"
   },
   {
     id: 2,
     title: "Deep Focus",
-    artist: "Concentration Music",
-    url: "https://example.com/music2.mp3"
+    artist: "Bensound",
+    url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3"
   },
   {
     id: 3,
-    title: "Nature Sounds",
-    artist: "Relaxation",
-    url: "https://example.com/music3.mp3"
+    title: "Calm Thinking",
+    artist: "Bensound",
+    url: "https://www.bensound.com/bensound-music/bensound-goinghigher.mp3"
   },
   {
     id: 4,
-    title: "Classical Study",
-    artist: "Mozart",
-    url: "https://example.com/music4.mp3"
+    title: "Soft Breeze",
+    artist: "Bensound",
+    url: "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3"
   },
-  {
-    id: 5,
-    title: "Ambient Study",
-    artist: "Focus Music",
-    url: "https://example.com/music5.mp3"
-  }
 ];
 
 export default function Spotify() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSong, setCurrentSong] = useState(0);
-  const [volume, setVolume] = useState(80);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentSong, setCurrentSong] = useState<number>(0);
+  const [volume, setVolume] = useState<number>(80);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const togglePlay = () => setIsPlaying(!isPlaying);
-  
+
   const nextSong = () => {
     setCurrentSong((prev) => (prev + 1) % SONGS.length);
   };
-  
+
   const previousSong = () => {
     setCurrentSong((prev) => (prev - 1 + SONGS.length) % SONGS.length);
   };
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      if (isPlaying) {
+        audio.play().catch((err) => console.error("Play error:", err));
+      } else {
+        audio.pause();
+      }
+    }
+  }, [isPlaying, currentSong]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100;
+    }
+  }, [volume]);
+
   return (
     <div className="bg-gray-800 p-6 rounded-xl">
+      {/* Hidden audio element */}
+      <audio ref={audioRef} src={SONGS[currentSong]?.url} />
+
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">Now Playing</h2>
         <div className="bg-gray-700 p-4 rounded-lg">
-          {/* <h3 className="text-white font-medium">{SONGS[currentSong].title}</h3>
-          <p className="text-gray-400">{SONGS[currentSong].artist}</p> */}
+          <h3 className="text-white font-medium">{SONGS[currentSong]?.title}</h3>
+          <p className="text-gray-400">{SONGS[currentSong]?.artist}</p>
         </div>
       </div>
 
@@ -102,7 +124,10 @@ export default function Spotify() {
           {SONGS.map((song, index) => (
             <button
               key={song.id}
-              onClick={() => setCurrentSong(index)}
+              onClick={() => {
+                setCurrentSong(index);
+                setIsPlaying(true);
+              }}
               className={`w-full p-3 rounded-lg text-left transition-colors ${
                 currentSong === index
                   ? 'bg-blue-500 text-white'

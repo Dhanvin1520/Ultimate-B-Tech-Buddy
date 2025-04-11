@@ -3,20 +3,10 @@ import { FileText, Download } from 'lucide-react';
 export default function Resume() {
   const resumeLinks = [
     {
-      title: "Software Engineer Template",
-      description: "Perfect for tech roles and developer positions",
-      url: "https://example.com/software-engineer-template"
+      title: "Template(designed by me)",
+      description: "Perfect for freshers can generate and downlaod the resume(open the link) ",
+      url: "https://vin-resume-builder-667cae.netlify.app/"
     },
-    {
-      title: "Full Stack Developer Template",
-      description: "Showcase your full stack development skills",
-      url: "https://example.com/fullstack-template"
-    },
-    {
-      title: "Data Scientist Template",
-      description: "Highlight your data science expertise",
-      url: "https://example.com/data-scientist-template"
-    }
   ];
 
   return (
@@ -38,7 +28,7 @@ export default function Resume() {
                 className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                <span>Download</span>
+                <span>Link</span>
               </a>
             </div>
           </div>

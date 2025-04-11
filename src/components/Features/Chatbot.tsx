@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronUp, Send, Bot, User as UserIcon } from 'lucide-react';
 import axios from 'axios';
 
@@ -21,6 +21,12 @@ export default function Chatbot() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +57,9 @@ export default function Chatbot() {
         }
       );
 
-      const aiText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I had trouble understanding that.';
+      const aiText =
+        response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        'Sorry, I had trouble understanding that.';
 
       const aiMessage: Message = {
         id: crypto.randomUUID(),
@@ -91,8 +99,9 @@ export default function Chatbot() {
       </button>
 
       {isExpanded && (
-        <div className="h-[calc(100%-4rem)] flex flex-col">
-          <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent">
+        <div className="flex-1 flex flex-col overflow-hidden h-[calc(100%-4rem)]">
+          {/* Scrollable chat area */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-transparent">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex items-start gap-3 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-orange-100 flex items-center justify-center">
@@ -103,7 +112,7 @@ export default function Chatbot() {
                   )}
                 </div>
                 <div
-                  className={`max-w-[75%] p-2 sm:p-3 rounded-xl transition-all duration-300 ${
+                  className={`max-w-[75%] p-2 sm:p-3 rounded-xl transition-all duration-300 break-words whitespace-pre-wrap overflow-hidden ${
                     msg.isUser
                       ? 'bg-zinc-800 text-white'
                       : 'bg-gradient-to-br from-orange-100 to-amber-200 text-black'
@@ -113,6 +122,7 @@ export default function Chatbot() {
                 </div>
               </div>
             ))}
+
             {isLoading && (
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full bg-orange-200 flex items-center justify-center">
@@ -123,8 +133,11 @@ export default function Chatbot() {
                 </div>
               </div>
             )}
+
+            <div ref={messagesEndRef} />
           </div>
 
+          {/* Input form area */}
           <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-gray-700 bg-[#1f2937]">
             <div className="flex gap-2 sm:gap-3">
               <input
