@@ -9,6 +9,7 @@ import Chat from '../Features/Chat';
 import Spotify from '../Features/Spotify';
 import Resume from '../Features/Resume';
 import Chatbot from '../Features/Chatbot';
+import { Music } from 'lucide-react';
 
 export default function Dashboard() {
   const { activeSection, darkMode } = useDashboardStore();
@@ -26,7 +27,7 @@ export default function Dashboard() {
       case 'LeetCode':
         return <LeetCode />;
       case 'Spotify':
-        return <Spotify />;
+        return <Music />;
       case 'Resume':
         return <Resume />;
       case 'Chat':
