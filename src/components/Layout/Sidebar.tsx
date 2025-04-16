@@ -97,7 +97,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Topbar */}
+    
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600" />
@@ -111,12 +111,12 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Desktop Sidebar */}
+
       <div className="hidden md:block w-64 h-screen">
         <SidebarContent />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+
       {isMobileMenuOpen && (
         <div className="md:hidden fixed top-0 left-0 w-64 h-full bg-gray-900 z-50 shadow-lg">
           <SidebarContent showCloseBtn />

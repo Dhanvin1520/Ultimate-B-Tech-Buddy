@@ -19,7 +19,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isGuest) {
-      setIsAuthenticated(true); // Guest login
+      setIsAuthenticated(true); 
       return;
     }
 
@@ -40,8 +40,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
 
     if (hasError) return;
 
-    // Replace with your actual authentication logic (e.g., API call)
-    // For now, simulate successful login
+
     setIsAuthenticated(true);
   };
 
