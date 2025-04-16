@@ -1,4 +1,4 @@
-import { useDashboardStore } from '../../store/dashboardStore';
+import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Notes from '../Features/Notes';
 import Calendar from '../Features/Calendar';
@@ -10,9 +10,19 @@ import Spotify from '../Features/Spotify';
 import Resume from '../Features/Resume';
 import Chatbot from '../Features/Chatbot';
 
-export default function Dashboard() {
-  // Removed darkMode from the store; only activeSection is used.
-  const { activeSection } = useDashboardStore();
+interface DashboardProps {
+  setIsAuthenticated: (value: boolean) => void;
+}
+
+export default function Dashboard({ setIsAuthenticated }: DashboardProps) {
+  const [activeSection, setActiveSection] = useState(() => {
+    return localStorage.getItem('activeSection') || 'Notes';
+  });
+
+  const handleSetActiveSection = (section: string) => {
+    setActiveSection(section);
+    localStorage.setItem('activeSection', section);
+  };
 
   const renderSection = () => {
     switch (activeSection) {
@@ -50,10 +60,13 @@ export default function Dashboard() {
   };
 
   return (
-    // The outer container is now always dark.
     <div className="min-h-screen dark">
       <div className="flex min-h-screen">
-        <Sidebar />
+        <Sidebar
+          setIsAuthenticated={setIsAuthenticated}
+          activeSection={activeSection}
+          setActiveSection={handleSetActiveSection}
+        />
         <main className="flex-1 p-8 bg-gray-900">
           {renderSection()}
         </main>

@@ -13,16 +13,18 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useAuthStore } from '../../store/authStore';
-import { useDashboardStore } from '../../store/dashboardStore';
 
-export default function Sidebar() {
-  const { logout } = useAuthStore();
-  const {
-    activeSection,
-    setActiveSection,
-  } = useDashboardStore();
+interface SidebarProps {
+  setIsAuthenticated: (value: boolean) => void;
+  activeSection: string;
+  setActiveSection: (section: string) => void;
+}
 
+export default function Sidebar({
+  setIsAuthenticated,
+  activeSection,
+  setActiveSection,
+}: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
@@ -34,8 +36,12 @@ export default function Sidebar() {
     { icon: <FileText className="w-5 h-5" />, label: 'Resume' },
     { icon: <Gamepad2 className="w-5 h-5" />, label: 'Games' },
     { icon: <MessageSquare className="w-5 h-5" />, label: 'Chat' },
-
   ];
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setIsMobileMenuOpen(false);
+  };
 
   const SidebarContent = ({ showCloseBtn = false }: { showCloseBtn?: boolean }) => (
     <div className="h-full w-64 bg-gray-900 text-white flex flex-col">
@@ -79,7 +85,7 @@ export default function Sidebar() {
 
       <div className="p-4 border-t border-gray-700">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
         >
           <LogOut className="w-5 h-5" />

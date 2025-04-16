@@ -1,11 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { useDashboardStore } from '../../store/dashboardStore';
 import { format } from 'date-fns';
+
+interface Note {
+  id: string;
+  content: string;
+  createdAt: string; 
+}
 
 export default function Notes() {
   const [newNote, setNewNote] = useState('');
-  const { notes, addNote, deleteNote } = useDashboardStore();
+  const [notes, setNotes] = useState<Note[]>([]);
+
+
+  useEffect(() => {
+    const storedNotes = localStorage.getItem('my-notes');
+    if (storedNotes) {
+      setNotes(JSON.parse(storedNotes));
+    }
+  }, []);
+
+
+  useEffect(() => {
+    localStorage.setItem('my-notes', JSON.stringify(notes));
+  }, [notes]);
+
+  const addNote = (content: string) => {
+    const newNote: Note = {
+      id: crypto.randomUUID(),
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setNotes((prevNotes) => [newNote, ...prevNotes]);
+  };
+
+  const deleteNote = (id: string) => {
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +69,7 @@ export default function Notes() {
           <div key={note.id} className="bg-gray-800 p-6 rounded-xl">
             <div className="flex justify-between items-start mb-3">
               <span className="text-sm text-gray-400">
-                {format(note.createdAt, 'MMM d, yyyy h:mm a')}
+                {format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}
               </span>
               <button
                 onClick={() => deleteNote(note.id)}

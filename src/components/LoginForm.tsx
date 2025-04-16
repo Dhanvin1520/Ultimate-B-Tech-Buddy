@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { GraduationCap, LogIn, User } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
 
-export default function LoginForm() {
+interface LoginFormProps {
+  setIsAuthenticated: (value: boolean) => void;
+}
+
+export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   const [isGuest, setIsGuest] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ email: '', password: '' });
-
-  const { login, loginAsGuest } = useAuthStore();
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,7 +19,7 @@ export default function LoginForm() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isGuest) {
-      loginAsGuest();
+      setIsAuthenticated(true); // Guest login
       return;
     }
 
@@ -26,12 +27,12 @@ export default function LoginForm() {
     const newErrors = { email: '', password: '' };
 
     if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email address.';
+      newErrors.email = 'Invalid email format.';
       hasError = true;
     }
 
     if (password.trim().length === 0) {
-      newErrors.password = 'Password is required.';
+      newErrors.password = 'Password cannot be empty.';
       hasError = true;
     }
 
@@ -39,7 +40,9 @@ export default function LoginForm() {
 
     if (hasError) return;
 
-    login(email, password);
+    // Replace with your actual authentication logic (e.g., API call)
+    // For now, simulate successful login
+    setIsAuthenticated(true);
   };
 
   return (

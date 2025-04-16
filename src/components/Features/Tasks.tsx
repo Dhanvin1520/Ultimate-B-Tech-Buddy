@@ -1,17 +1,40 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { useDashboardStore } from '../../store/dashboardStore';
+
+type Task = {
+  id: string;
+  content: string;
+  completed: boolean;
+};
 
 export default function Tasks() {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState('');
-  const { tasks, addTask, toggleTask, deleteTask, taskFilter, setTaskFilter } = useDashboardStore();
+  const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTask.trim()) {
-      addTask(newTask);
+      const newTaskItem: Task = {
+        id: crypto.randomUUID(),
+        content: newTask,
+        completed: false,
+      };
+      setTasks((prev) => [...prev, newTaskItem]);
       setNewTask('');
     }
+  };
+
+  const toggleTask = (id: string) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -40,7 +63,7 @@ export default function Tasks() {
           ))}
         </div>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
         <input
           type="text"
