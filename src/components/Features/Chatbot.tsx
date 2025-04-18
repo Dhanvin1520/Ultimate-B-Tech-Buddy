@@ -83,7 +83,7 @@ export default function Chatbot() {
 
   return (
     <div className={`fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[28rem] max-w-[30rem] bg-[#0f172a] text-white border border-blue-400 rounded-2xl shadow-lg z-50 overflow-hidden transition-all ${isExpanded ? 'h-[90vh]' : 'h-16'}`}>
-      {/* Header */}
+
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full h-16 flex items-center justify-between px-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-t-2xl"
@@ -99,7 +99,7 @@ export default function Chatbot() {
 
       {isExpanded && (
         <div className="flex flex-col h-[calc(100%-4rem)]">
-          {/* Scrollable Messages */}
+   
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0f172a]">
             {messages.map((msg) => (
               <div
@@ -140,7 +140,7 @@ export default function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+
           <form
             onSubmit={handleSubmit}
             className="p-3 bg-[#1e293b] border-t border-blue-400"

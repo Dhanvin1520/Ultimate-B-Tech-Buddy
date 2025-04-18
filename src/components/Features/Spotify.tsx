@@ -70,7 +70,7 @@ export default function Spotify() {
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl">
-      {/* Hidden audio element */}
+
       <audio ref={audioRef} src={SONGS[currentSong]?.url} />
 
       <div className="mb-8">
