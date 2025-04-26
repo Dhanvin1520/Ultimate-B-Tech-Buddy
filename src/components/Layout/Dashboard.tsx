@@ -9,6 +9,7 @@ import Chat from '../Features/Chat';
 import Spotify from '../Features/Spotify';
 import Resume from '../Features/Resume';
 import Chatbot from '../Features/Chatbot';
+import BTechBuddyQuizGame from '../Features/Games';
 
 interface DashboardProps {
   setIsAuthenticated: (value: boolean) => void;
@@ -44,9 +45,8 @@ export default function Dashboard({ setIsAuthenticated }: DashboardProps) {
         return <Chat />;
       case 'Games':
         return (
-          <div className="bg-gray-800 p-6 rounded-xl">
-            <h2 className="text-xl font-semibold mb-4 text-white">Games</h2>
-            <p className="text-gray-400">Games section coming soon...</p>
+          <div className="bg-gray-800 p-6 rounded-xl flex justify-center items-center h-full">
+            <BTechBuddyQuizGame/>
           </div>
         );
       default:
