@@ -1,0 +1,20 @@
+{
+    "name": "sum-of-numbers-fs-module-boilerplate",
+    "version": "1.0.0",
+    "main": "src/index.js",
+    "scripts": {
+      "test": "mocha '__tests__/*.js' --reporter mochawesome --recursive  --timeout 60000 --exit",
+      "start": "node src/index.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+      "mochawesome": "6.1.1"
+    },
+    "devDependencies": {
+      "chai": "^4.2.0",
+      "chai-http": "^4.3.0",
+      "mocha": "^8.2.1"
+    }
+  }
