@@ -2,32 +2,35 @@
 # Exit on error
 set -o errexit
 
+# Set default Node.js version to 20.x LTS if not specified
+export NODE_VERSION=${NODE_VERSION:-20.11.1}
+
 # Print environment variables for debugging
 echo "=== Build Environment ==="
+echo "Using Node.js version: ${NODE_VERSION}"
 echo "NODE_ENV: ${NODE_ENV}"
-echo "NODE_VERSION: ${NODE_VERSION}"
 echo "NPM_VERSION: $(npm --version)"
 echo "NODE_PATH: $(which node)"
 
-# Install Node.js version if specified
-if [ -n "${NODE_VERSION}" ]; then
-  echo "Installing Node.js ${NODE_VERSION}..."
-  npm install -g n
-  n ${NODE_VERSION}
-fi
+# Install specified Node.js version
+echo "=== Installing Node.js ${NODE_VERSION} ==="
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm install ${NODE_VERSION}
+nvm use ${NODE_VERSION}
+
+# Verify Node.js and npm versions
+echo "Node.js version: $(node --version)"
+echo "npm version: $(npm --version)"
 
 # Install global dependencies
 echo "=== Installing Global Dependencies ==="
-npm install -g typescript@latest
-npm install -g vite
+npm install -g typescript@latest vite@latest
 
 # Install project dependencies
 echo "=== Installing Project Dependencies ==="
 npm install --force
-
-# Install type definitions
-echo "=== Installing Type Definitions ==="
-npm install --save-dev @types/node @types/react @types/react-dom @vitejs/plugin-react
 
 # Build the project
 echo "=== Building Project ==="
