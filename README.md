@@ -1,1 +1,1 @@
-👾Live Website: https://ultimate-btech-buddy-0f9ba7.netlify.app/
+👾Live Website: https://ultimate-b-tech-buddy-6bha.vercel.app/
