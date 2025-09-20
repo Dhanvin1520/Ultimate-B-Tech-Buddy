@@ -2,17 +2,19 @@ services:
   - type: web
     name: btech-buddy-backend
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node server.js
+    buildCommand: |
+      echo "Building backend..."
+      cd backend && npm install
+    startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      # Add these environment variables in Render dashboard:
+      # Required environment variables (set these in Render dashboard):
       # - MONGODB_URI: Your MongoDB Atlas connection string
-      # - JWT_SECRET: Your JWT secret key
-      # - Any other required environment variables
+      # - JWT_SECRET: A secure secret key for JWT
+      # - CORS_ORIGIN: Your frontend URL (e.g., https://your-frontend-url.vercel.app)
     plan: free
     region: oregon
     autoDeploy: true
