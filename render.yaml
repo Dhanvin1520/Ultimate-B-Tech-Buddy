@@ -3,14 +3,16 @@ services:
     name: btech-buddy-backend
     env: node
     buildCommand: |
-      echo "Building backend..."
-      cd backend && npm install
+      chmod +x render-build.sh
+      ./render-build.sh
     startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: NODE_VERSION
+        value: 18.x
       # Required environment variables (set these in Render dashboard):
       # - MONGODB_URI: Your MongoDB Atlas connection string
       # - JWT_SECRET: A secure secret key for JWT

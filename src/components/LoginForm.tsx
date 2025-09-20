@@ -1,4 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
 import { GraduationCap, LogIn, User } from 'lucide-react';
 import api from '../lib/api';
 
@@ -9,15 +17,22 @@ interface LoginFormProps {
 export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   const [isGuest, setIsGuest] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [serverError, setServerError] = useState('');
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'username') setUsername(value);
+    if (name === 'email') setEmail(value);
+    if (name === 'password') setPassword(value);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

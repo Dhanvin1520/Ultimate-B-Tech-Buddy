@@ -1,14 +1,35 @@
-import { useEffect, useState } from 'react'
-import api from '../lib/api'
+import React, { useEffect, useState, ChangeEvent } from 'react';
+import api from '../lib/api';
 
-type Item = { id: string; content: string; priority: 'low'|'medium'|'high'; completed: boolean }
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
+
+interface Item {
+  id: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  completed: boolean;
+}
 
 export default function SidebarTodo() {
   const [items, setItems] = useState<Item[]>([])
-  const [text, setText] = useState('')
+  const [text, setText] = useState<string>('')
   const [priority, setPriority] = useState<'low'|'medium'|'high'>('medium')
-  const [open, setOpen] = useState(true)
-  const guest = localStorage.getItem('guest') === 'true'
+  const [open, setOpen] = useState(true);
+  const guest = localStorage.getItem('guest') === 'true';
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+  };
+
+  const handlePriorityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPriority(e.target.value as 'low' | 'medium' | 'high');
+  };
 
   useEffect(() => {
     if (guest) {
@@ -79,9 +100,9 @@ export default function SidebarTodo() {
       {open && (
         <div className="mt-2 space-y-2">
           <div className="flex gap-2 md:flex-row flex-col">
-            <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Add" className="flex-1 w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400" />
+            <input value={text} onChange={handleTextChange} placeholder="Add" className="flex-1 w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400" />
             <div className="flex gap-2">
-              <select value={priority} onChange={(e)=>setPriority(e.target.value as any)} className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-slate-900 w-full md:w-auto">
+              <select value={priority} onChange={handlePriorityChange} className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-slate-900 w-full md:w-auto">
                 <option value="low">low</option>
                 <option value="medium">medium</option>
                 <option value="high">high</option>
