@@ -16,12 +16,20 @@ if [ -n "${NODE_VERSION}" ]; then
   n ${NODE_VERSION}
 fi
 
-# Install dependencies
-echo "=== Installing Dependencies ==="
+# Install global dependencies
+echo "=== Installing Global Dependencies ==="
+npm install -g typescript@latest
+
+# Install project dependencies
+echo "=== Installing Project Dependencies ==="
 npm install --force
 
-# Build the frontend
-echo "=== Building Frontend ==="
+# Install type definitions
+echo "=== Installing Type Definitions ==="
+npm install --save-dev @types/node @types/react @types/react-dom
+
+# Build the project
+echo "=== Building Project ==="
 npm run build
 
 # Install backend dependencies

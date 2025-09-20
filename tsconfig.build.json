@@ -8,10 +8,18 @@
     "module": "esnext",
     "target": "es2020",
     "lib": ["es2020", "dom", "dom.iterable"],
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react-jsx"
   },
   "include": [
-    "src",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "vite.config.ts"
   ],
   "exclude": [
