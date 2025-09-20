@@ -5,7 +5,7 @@ services:
     buildCommand: |
       chmod +x render-build.sh
       ./render-build.sh
-    startCommand: cd backend && node server.js
+    startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,9 +14,32 @@ services:
       - key: NODE_VERSION
         value: 18.x
       # Required environment variables (set these in Render dashboard):
-      # - MONGODB_URI: Your MongoDB Atlas connection string
-      # - JWT_SECRET: A secure secret key for JWT
-      # - CORS_ORIGIN: Your frontend URL (e.g., https://your-frontend-url.vercel.app)
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"  # Update this to your frontend URL in production
     plan: free
     region: oregon
     autoDeploy: true
+    buildCommand: |
+      echo "Starting build process..."
+      npm install -g npm@latest
+      npm install -g n
+      n 18.20.2
+      node -v
+      npm -v
+      
+      # Install dependencies
+      npm install
+      
+      # Build the frontend
+      npm run build
+      
+      # Install backend dependencies
+      cd backend
+      npm install --production
+      cd ..
+      
+      echo "Build completed successfully!"
