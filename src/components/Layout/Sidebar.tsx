@@ -3,7 +3,6 @@ import {
   Code2,
   LogOut,
   Music,
-  Settings,
   StickyNote,
   FileText,
   Gamepad2,

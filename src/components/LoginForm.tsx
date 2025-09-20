@@ -28,13 +28,6 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
     return emailRegex.test(email);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === 'username') setUsername(value);
-    if (name === 'email') setEmail(value);
-    if (name === 'password') setPassword(value);
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setServerError('');
