@@ -6,10 +6,10 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "lint": "eslint . --ext .ts,.tsx",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit -p tsconfig.build.json"
   },
   "dependencies": {
     "@react-three/drei": "9.58.0",
