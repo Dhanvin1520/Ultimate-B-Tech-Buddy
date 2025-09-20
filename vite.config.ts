@@ -1,16 +1,16 @@
-/// <reference types="node" />
-/// <reference types="vite/client" />
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-// https://vitejs.dev/config/
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': resolve(__dirname, './src'),
     },
   },
   build: {
@@ -18,6 +18,14 @@ export default defineConfig({
     sourcemap: true,
     target: 'esnext',
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          'react-three': ['@react-three/fiber', '@react-three/drei'],
+        },
+      },
+    },
   },
   define: {
     'process.env': {},
@@ -27,6 +35,7 @@ export default defineConfig({
     esbuildOptions: {
       target: 'esnext',
     },
+    include: ['@react-three/fiber', '@react-three/drei'],
   },
   server: {
     port: 3000,
