@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RefreshCw } from 'lucide-react';
 
 type TimerPreset = {
@@ -9,6 +9,7 @@ type TimerPreset = {
 export default function Timer() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
+  const intervalRef = useRef<number | null>(null);
   
   const presets: TimerPreset[] = [
     { label: 'Pomodoro', minutes: 25 },
@@ -17,13 +18,27 @@ export default function Timer() {
   ];
 
   useEffect(() => {
-    let interval: number;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((time) => time - 1);
+      intervalRef.current = window.setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            setIsRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     }
-    return () => clearInterval(interval);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [isRunning, timeLeft]);
 
   const formatTime = (seconds: number): string => {
