@@ -9,6 +9,10 @@
     "target": "es2020",
     "lib": ["es2020", "dom", "dom.iterable"],
     "types": ["vite/client", "node"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/vite/types"
+    ],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

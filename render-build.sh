@@ -19,6 +19,7 @@ fi
 # Install global dependencies
 echo "=== Installing Global Dependencies ==="
 npm install -g typescript@latest
+npm install -g vite
 
 # Install project dependencies
 echo "=== Installing Project Dependencies ==="
@@ -26,7 +27,7 @@ npm install --force
 
 # Install type definitions
 echo "=== Installing Type Definitions ==="
-npm install --save-dev @types/node @types/react @types/react-dom
+npm install --save-dev @types/node @types/react @types/react-dom @vitejs/plugin-react
 
 # Build the project
 echo "=== Building Project ==="

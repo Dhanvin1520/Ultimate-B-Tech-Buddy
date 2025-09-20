@@ -8,6 +8,11 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/vite/types"
+    ],
+    "types": ["vite/client", "node"],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -19,11 +24,11 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client", "node"]
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
   "exclude": [
     "node_modules",
