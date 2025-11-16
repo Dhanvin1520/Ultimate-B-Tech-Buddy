@@ -19,6 +19,7 @@ const app = express();
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://ultimate-b-tech-buddy.vercel.app',
+  'https://ultimate-b-tech-buddy-g2q9-e52gh2tkd.vercel.app',
   /\.vercel\.app$/,
   'https://ultimate-b-tech-buddy.netlify.app',
   'http://localhost:3000',
