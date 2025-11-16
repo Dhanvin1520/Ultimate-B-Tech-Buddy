@@ -18,14 +18,13 @@ const app = express();
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL?.replace(/\/$/, ''),
-  'https://ultimate-b-tech-buddy-6bha.vercel.app',
-  'https://ultimate-b-tech-buddy-g2q9.vercel.app/',
+  'https://ultimate-b-tech-buddy.vercel.app',
+  /\.vercel\.app$/,
   'https://ultimate-b-tech-buddy.netlify.app',
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:5173'
-].filter(Boolean);
+];
 
 const PREDEFINED_ROOMS = [
   { id: 'nst-commons', name: 'NST Commons', description: 'General chatter for every NST student.' },
