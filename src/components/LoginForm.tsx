@@ -75,10 +75,10 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200">
+    <div className="w-full max-w-md p-8 bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-800 text-white">
       <div className="flex items-center justify-center mb-8">
-        <GraduationCap className="w-12 h-12 text-slate-900" />
-        <h1 className="text-3xl font-bold ml-3 text-slate-900">
+        <GraduationCap className="w-12 h-12 text-blue-500" />
+        <h1 className="text-3xl font-bold ml-3 text-white">
           BTech Buddy
         </h1>
       </div>
@@ -93,7 +93,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-600 focus:outline-none text-slate-900 placeholder-slate-400"
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
                 />
               </div>
             )}
@@ -103,7 +103,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-600 focus:outline-none text-slate-900 placeholder-slate-400"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
               />
               {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
             </div>
@@ -113,7 +113,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-600 focus:outline-none text-slate-900 placeholder-slate-400"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
               />
               {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
             </div>
@@ -129,7 +129,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
         </button>
 
         {serverError && (
-          <div className="text-center text-red-600 text-sm">{serverError}</div>
+          <div className="text-center text-red-500 text-sm">{serverError}</div>
         )}
 
         <div className="text-center">
@@ -139,7 +139,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
               setIsGuest(!isGuest);
               setErrors({ email: '', password: '' });
             }}
-            className="text-slate-700 hover:text-slate-900 text-sm"
+            className="text-slate-300 hover:text-white text-sm"
           >
             {isGuest ? 'Have an account? Login' : 'Continue as Guest'}
           </button>
@@ -149,7 +149,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setIsSignup((v) => !v)}
-              className="text-slate-700 hover:text-slate-900 text-sm"
+              className="text-slate-300 hover:text-white text-sm"
             >
               {isSignup ? 'Already have an account? Login' : "Don't have an account? Sign up"}
             </button>

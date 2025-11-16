@@ -20,7 +20,7 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="min-h-screen bg-slate-950 text-white">
         <Background />
         <div className="min-h-screen flex items-center justify-center p-4">
           <LoginForm setIsAuthenticated={handleSetIsAuthenticated} />
@@ -29,7 +29,11 @@ function App() {
     );
   }
 
-  return <Dashboard setIsAuthenticated={handleSetIsAuthenticated} />;
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      <Dashboard setIsAuthenticated={handleSetIsAuthenticated} />
+    </div>
+  );
 }
 
 export default App;
