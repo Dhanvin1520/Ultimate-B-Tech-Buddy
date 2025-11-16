@@ -4,9 +4,43 @@ import { Camera, CameraOff, Users, PhoneOff, MonitorPlay, Mic, MicOff } from 'lu
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://ultimate-b-tech-buddy.onrender.com/api';
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_BASE.replace(/\/?api$/, '');
-const ICE_SERVERS: RTCConfiguration['iceServers'] = [
-  { urls: 'stun:stun.l.google.com:19302' },
+
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: [
+    'stun:stun.l.google.com:19302',
+    'stun:stun1.l.google.com:19302',
+    'stun:stun2.l.google.com:19302'
+  ] },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  }
 ];
+
+const parsedIceServers = (() => {
+  const raw = import.meta.env.VITE_ICE_SERVERS;
+  if (!raw) return [];
+  try {
+    const value = JSON.parse(raw);
+    return Array.isArray(value) ? value as RTCIceServer[] : [];
+  } catch (err) {
+    console.warn('Invalid VITE_ICE_SERVERS JSON. Falling back to defaults.', err);
+    return [];
+  }
+})();
+
+const ICE_SERVERS: RTCConfiguration['iceServers'] = parsedIceServers.length ? parsedIceServers : DEFAULT_ICE_SERVERS;
 
 interface PeerStream {
   peerId: string;
