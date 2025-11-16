@@ -29,6 +29,8 @@ export default function VideoChat() {
 
   const socketRef = useRef<Socket | null>(null);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
+  const pendingCandidatesRef = useRef<Record<string, RTCIceCandidateInit[]>>({});
+  const localStreamRef = useRef<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const roomRef = useRef('');
 
@@ -84,14 +86,12 @@ export default function VideoChat() {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('video:signal', { roomId: currentRoom, targetId: from, data: pc.localDescription });
+        await flushPendingCandidates(from);
       } else if (data?.type === 'answer') {
         await pc.setRemoteDescription(new RTCSessionDescription(data));
+        await flushPendingCandidates(from);
       } else if (data?.candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(data));
-        } catch (err) {
-          console.error('ICE candidate failed', err);
-        }
+        await handleIncomingCandidate(from, data);
       }
     });
 
@@ -106,6 +106,7 @@ export default function VideoChat() {
       socketRef.current = null;
       Object.values(peersRef.current).forEach((pc) => pc.close());
       peersRef.current = {};
+      pendingCandidatesRef.current = {};
       stopLocalStream();
     };
   }, []);
@@ -115,9 +116,10 @@ export default function VideoChat() {
   }, [joinedRoom]);
 
   const ensureLocalStream = useCallback(async () => {
-    if (localStream) return localStream;
+    if (localStreamRef.current) return localStreamRef.current;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStreamRef.current = stream;
       setLocalStream(stream);
       return stream;
     } catch (err) {
@@ -125,11 +127,21 @@ export default function VideoChat() {
       setError('Please allow camera & microphone access to join the video room.');
       throw err;
     }
+  }, []);
+
+  useEffect(() => {
+    if (localStreamRef.current !== localStream) {
+      localStreamRef.current = localStream;
+    }
   }, [localStream]);
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      const element = localVideoRef.current;
+      element.play?.().catch(() => {
+        /* autoplay might fail silently; ignore */
+      });
     }
   }, [localStream]);
 
@@ -146,7 +158,9 @@ export default function VideoChat() {
     };
 
     pc.ontrack = (event) => {
-      setRemoteStreams((prev) => ({ ...prev, [peerId]: event.streams[0] }));
+      const [firstStream] = event.streams;
+      const resolvedStream = firstStream ?? new MediaStream([event.track]);
+      setRemoteStreams((prev) => ({ ...prev, [peerId]: resolvedStream }));
     };
 
     pc.onconnectionstatechange = () => {
@@ -155,7 +169,7 @@ export default function VideoChat() {
       }
     };
 
-    const streamToUse = streamOverride ?? localStream;
+    const streamToUse = streamOverride ?? localStreamRef.current;
     streamToUse?.getTracks().forEach((track) => pc.addTrack(track, streamToUse));
 
     return pc;
@@ -169,11 +183,50 @@ export default function VideoChat() {
     socketRef.current?.emit('video:signal', { roomId, targetId: peerId, data: offer });
   };
 
+  async function handleIncomingCandidate(peerId: string, candidate: RTCIceCandidateInit) {
+    if (!candidate) return;
+    const pc = peersRef.current[peerId];
+    if (!pc || !pc.remoteDescription) {
+      if (!pendingCandidatesRef.current[peerId]) {
+        pendingCandidatesRef.current[peerId] = [];
+      }
+      pendingCandidatesRef.current[peerId].push(candidate);
+      return;
+    }
+
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (err) {
+      console.error('ICE candidate failed', err);
+    }
+  }
+
+  async function flushPendingCandidates(peerId: string) {
+    const pc = peersRef.current[peerId];
+    const pending = pendingCandidatesRef.current[peerId];
+    if (!pc || !pending?.length || !pc.remoteDescription) return;
+
+    while (pending.length) {
+      const candidate = pending.shift();
+      if (!candidate) continue;
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error('ICE candidate failed', err);
+      }
+    }
+
+    delete pendingCandidatesRef.current[peerId];
+  }
+
   const removePeer = (peerId: string) => {
     const pc = peersRef.current[peerId];
     if (pc) {
       pc.close();
       delete peersRef.current[peerId];
+    }
+    if (pendingCandidatesRef.current[peerId]) {
+      delete pendingCandidatesRef.current[peerId];
     }
     setRemoteStreams((prev) => {
       const next = { ...prev };
@@ -189,8 +242,10 @@ export default function VideoChat() {
   };
 
   const stopLocalStream = () => {
-    localStream?.getTracks().forEach((track) => track.stop());
+    const stream = localStreamRef.current || localStream;
+    stream?.getTracks().forEach((track) => track.stop());
     setLocalStream(null);
+    localStreamRef.current = null;
   };
 
   const handleJoin = async () => {
@@ -198,8 +253,11 @@ export default function VideoChat() {
     setJoining(true);
     try {
       const stream = await ensureLocalStream();
-      stream.getTracks().forEach((track) => {
-        track.enabled = true;
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = cameraEnabled;
+      });
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = micEnabled;
       });
       const normalizedRoom = roomInput.trim().toLowerCase();
       roomRef.current = normalizedRoom;
@@ -220,7 +278,9 @@ export default function VideoChat() {
     socketRef.current.emit('video:leave', { roomId: joinedRoom });
     Object.values(peersRef.current).forEach((pc) => pc.close());
     peersRef.current = {};
+    pendingCandidatesRef.current = {};
     setRemoteStreams({});
+    setPeerInfo({});
     stopLocalStream();
     roomRef.current = '';
     setJoinedRoom('');
@@ -229,13 +289,15 @@ export default function VideoChat() {
   const toggleCamera = () => {
     const next = !cameraEnabled;
     setCameraEnabled(next);
-    localStream?.getVideoTracks().forEach((track) => track.enabled = next);
+    const stream = localStreamRef.current || localStream;
+    stream?.getVideoTracks().forEach((track) => (track.enabled = next));
   };
 
   const toggleMic = () => {
     const next = !micEnabled;
     setMicEnabled(next);
-    localStream?.getAudioTracks().forEach((track) => track.enabled = next);
+    const stream = localStreamRef.current || localStream;
+    stream?.getAudioTracks().forEach((track) => (track.enabled = next));
   };
 
   const remotePeers = useMemo<PeerStream[]>(
@@ -252,6 +314,9 @@ export default function VideoChat() {
       const videoEl = document.getElementById(`remote-${peerId}`) as HTMLVideoElement | null;
       if (videoEl && videoEl.srcObject !== stream) {
         videoEl.srcObject = stream;
+        videoEl.play?.().catch(() => {
+          /* Ignore autoplay errors; browser will resume once user interacts */
+        });
       }
     });
   }, [remotePeers]);
