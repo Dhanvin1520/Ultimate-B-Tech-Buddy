@@ -13,7 +13,8 @@ const leetcodeRoutes = require('./routes/leetcode');
 const app = express();
 
 const allowedOrigins = [
-  'https://ultimate-b-tech-buddy-6bha.vercel.app'
+  'https://ultimate-b-tech-buddy-6bha.vercel.app',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
