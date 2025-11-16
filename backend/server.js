@@ -20,6 +20,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL?.replace(/\/$/, ''),
   'https://ultimate-b-tech-buddy-6bha.vercel.app',
+  'https://ultimate-b-tech-buddy-g2q9.vercel.app/',
   'https://ultimate-b-tech-buddy.netlify.app',
   'http://localhost:3000',
   'http://localhost:5173',
