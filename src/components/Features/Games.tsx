@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
+import { RotateCcw, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
-const quizData = [
+type QuizQuestion = {
+  question: string;
+  options: string[];
+  answer: string;
+};
+
+const quizData: QuizQuestion[] = [
   {
     question: 'What is the output of `typeof NaN` in JavaScript?',
     options: ['undefined', 'number', 'NaN', 'object'],
@@ -23,98 +30,161 @@ const quizData = [
   },
   {
     question: 'In React, props are _____.',
-    options: ['mutable', 'immutable', 'global', 'optional'],
+    options: ['mutable', 'functions', 'immutable', 'state'],
     answer: 'immutable',
   },
   {
-    question: 'In a regular JavaScript function (not an arrow function), what does "this" refer to?',
-    options: [
-      'The object it belongs to',
-      'Window object',
-      'Depends on how the function is called',
-      'Global scope always',
-    ],
-    answer: 'Depends on how the function is called',
+    question: 'In a regular function, what does `this` refer to by default?',
+    options: ['Window object', 'The function itself', 'Depends on how it is called', 'Undefined'],
+    answer: 'Depends on how it is called',
   },
 ];
 
-const TechQuiz: React.FC = () => {
+const optionClasses = (
+  option: string,
+  selected: string | null,
+  feedback: 'correct' | 'incorrect' | null,
+  answer: string,
+) => {
+  const base =
+    'rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-left text-lg font-semibold text-white/80 transition-all duration-300 hover:border-amber-300/60 hover:bg-amber-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 disabled:cursor-not-allowed';
+
+  if (!selected) return base;
+
+  if (option === selected && feedback === 'correct')
+    return `${base} border-emerald-400/60 bg-emerald-500/10 text-white shadow-[0_0_25px_rgba(16,185,129,0.25)]`;
+
+  if (option === selected && feedback === 'incorrect')
+    return `${base} border-rose-400/60 bg-rose-500/10 text-white shadow-[0_0_25px_rgba(251,113,133,0.25)]`;
+
+  if (feedback === 'incorrect' && option === answer)
+    return `${base} border-emerald-400/30 bg-emerald-500/5 text-white`;
+
+  return `${base} opacity-50`;
+};
+
+export default function TechQuiz() {
   const [index, setIndex] = useState(0);
   const [points, setPoints] = useState(0);
   const [quizOver, setQuizOver] = useState(false);
-  const [incorrect, setIncorrect] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
-  const handleChoice = (selected: string) => {
-    if (quizData[index]?.answer === selected) {
-      setPoints(prev => prev + 1);
-      setIncorrect(false);
+  const totalQuestions = quizData.length;
+  const currentQuestion = quizData[index];
+  const progress = quizOver ? 100 : (index / totalQuestions) * 100;
+
+  const handleChoice = (option: string) => {
+    if (quizOver || feedback) return;
+    setSelectedOption(option);
+    const isCorrect = currentQuestion?.answer === option;
+
+    if (isCorrect) {
+      setPoints((prev) => prev + 1);
+      setFeedback('correct');
     } else {
-      setIncorrect(true);
+      setFeedback('incorrect');
     }
 
     setTimeout(() => {
-      if (index + 1 < quizData.length) {
-        setIndex(prev => prev + 1);
-        setIncorrect(false);
+      if (index + 1 < totalQuestions) {
+        setIndex((prev) => prev + 1);
+        setSelectedOption(null);
+        setFeedback(null);
       } else {
         setQuizOver(true);
       }
-    }, 800);
+    }, 900);
   };
 
   const resetQuiz = () => {
     setIndex(0);
     setPoints(0);
     setQuizOver(false);
-    setIncorrect(false);
+    setSelectedOption(null);
+    setFeedback(null);
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 bg-gray-800 rounded-2xl shadow-lg flex flex-col items-center">
-      {!quizOver ? (
-        <>
-          <h1 className="text-cyan-400 text-3xl font-bold mb-6 text-center">Tech Quiz 🎯</h1>
+    <div className="glass-panel border-white/10 p-6 text-white">
+      <div className="flex flex-col gap-2 text-center">
+        <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/50">
+          <Sparkles className="h-4 w-4 text-amber-300" />
+          Quiz Mode
+        </div>
+        <h1 className="panel-title text-3xl">Tech Quiz 🎯</h1>
+        <p className="text-sm text-white/50">
+          Quick-fire fundamentals to keep your brain warmed up.
+        </p>
+      </div>
 
-          <div className="text-white text-xl font-semibold mb-6 text-center">
-            {quizData[index]?.question}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/5 bg-white/5 px-5 py-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/40">Score</p>
+          <p className="text-3xl font-semibold text-white">{points}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/40">Progress</p>
+          <p className="text-3xl font-semibold text-white">
+            {quizOver ? totalQuestions : index + 1}
+            <span className="text-white/40"> / {totalQuestions}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {!quizOver ? (
+        <div className="mt-6 space-y-4">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Question</p>
+            <p className="mt-3 text-2xl font-semibold leading-snug text-white">
+              {currentQuestion?.question}
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-            {quizData[index]?.options.map((option, i) => (
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+            {currentQuestion?.options.map((option) => (
               <button
-                key={i}
+                key={option}
                 onClick={() => handleChoice(option)}
-                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300"
+                disabled={!!feedback}
+                className={optionClasses(option, selectedOption, feedback, currentQuestion.answer)}
               >
                 {option}
               </button>
             ))}
           </div>
 
-          {incorrect && (
-            <div className="text-red-400 text-lg font-bold mt-4 animate-pulse">
-              Incorrect! Try the next one. 💥
+          {feedback === 'correct' && (
+            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">
+              Nailed it! Keep going.
             </div>
           )}
 
-          <div className="text-gray-400 text-sm mt-6">
-            Question {index + 1} / {quizData.length}
-          </div>
-        </>
+          {feedback === 'incorrect' && (
+            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-center text-sm font-semibold text-rose-200">
+              Missed that one — watch for the right concept!
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="flex flex-col items-center gap-6">
-          <h2 className="text-3xl font-bold text-cyan-400">Quiz Over!</h2>
-          <p className="text-xl text-white">Final Score: {points} / {quizData.length}</p>
-          <button
-            onClick={resetQuiz}
-            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300"
-          >
+        <div className="mt-8 space-y-6 text-center">
+          <h2 className="panel-title text-3xl">Quiz Over!</h2>
+          <p className="text-lg text-white/70">
+            You scored <span className="text-white">{points}</span> out of {totalQuestions}.
+          </p>
+          <button onClick={resetQuiz} className="primary-btn inline-flex items-center gap-2 px-8 py-3">
+            <RotateCcw className="h-5 w-5" />
             Play Again
           </button>
         </div>
       )}
     </div>
   );
-};
-
-export default TechQuiz;
+}

@@ -83,18 +83,18 @@ export default function Tasks() {
   });
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl p-6 rounded-xl border border-slate-200">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-slate-900">Tasks</h2>
+    <div className="glass-panel border-white/10 p-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="panel-title text-2xl">Tasks</h2>
         <div className="flex gap-2">
           {(['all', 'active', 'completed'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setTaskFilter(filter)}
-              className={`px-3 py-1 rounded-lg capitalize ${
+              className={`rounded-2xl px-4 py-2 capitalize ${
                 taskFilter === filter
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  ? 'bg-amber-500/20 text-white shadow-inner'
+                  : 'border border-white/10 text-white/60 hover:text-white'
               }`}
             >
               {filter}
@@ -103,17 +103,17 @@ export default function Tasks() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
+      <form onSubmit={handleSubmit} className="mb-6 flex gap-3">
         <input
           type="text"
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
-          className="flex-1 bg-white text-slate-900 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-600 border border-slate-200 placeholder-slate-400"
+          className="flex-1 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40"
           placeholder="Add a new task..."
         />
         <button
           type="submit"
-          className="p-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+          className="primary-btn"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -123,24 +123,24 @@ export default function Tasks() {
         {filteredTasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-center gap-2 bg-white p-3 rounded-lg group border border-slate-200"
+            className="group flex items-center gap-3 rounded-3xl border border-white/5 bg-white/5 p-4"
           >
             <input
               type="checkbox"
               checked={task.completed}
               onChange={() => toggleTask(task.id)}
-              className="rounded border-slate-400 text-slate-900 focus:ring-slate-700"
+              className="rounded border-white/30 text-amber-300"
             />
             <span
-              className={`flex-1 ${
-                task.completed ? 'line-through text-slate-400' : 'text-slate-900'
+              className={`flex-1 text-sm ${
+                task.completed ? 'text-white/40 line-through' : 'text-white/80'
               }`}
             >
               {task.content}
             </span>
             <button
               onClick={() => deleteTask(task.id)}
-              className="text-slate-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-white/40 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-300"
             >
               <Trash2 className="w-4 h-4" />
             </button>

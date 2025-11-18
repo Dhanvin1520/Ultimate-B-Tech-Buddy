@@ -356,24 +356,24 @@ export default function VideoChat() {
   }, [remotePeers]);
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] text-white flex flex-col gap-4">
-      <div className="flex flex-wrap gap-3 items-center justify-between rounded-2xl bg-gray-900/70 border border-gray-800 p-4 relative overflow-hidden">
+    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-5 text-white">
+      <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl" />
         </div>
         <div>
           <p className="text-xs uppercase text-gray-400 tracking-[0.3em]">Live rooms</p>
           <h2 className="text-2xl font-semibold">NST Video Lounge</h2>
           <p className="text-sm text-gray-400">Open the room, invite a batchmate, collaborate face-to-face.</p>
         </div>
-        <div className={`text-xs px-3 py-1 rounded-full border backdrop-blur-md ${socketConnected ? 'border-emerald-500 text-emerald-300 bg-emerald-500/10' : 'border-red-500 text-red-300 bg-red-500/10'}`}>
+        <div className={`rounded-full border px-4 py-1 text-xs backdrop-blur-md ${socketConnected ? 'border-emerald-400/70 text-emerald-200 bg-emerald-500/5' : 'border-red-400/70 text-red-200 bg-red-500/5'}`}>
           {socketConnected ? 'Socket connected' : 'Socket offline'}
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[340px_1fr] flex-1 min-h-0">
-        <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4">
+      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr]">
+        <section className="glass-panel border-white/10 p-5 flex flex-col gap-4">
           <div>
             <label className="text-xs text-gray-400 uppercase">Room ID</label>
             <input
@@ -421,7 +421,7 @@ export default function VideoChat() {
           )}
         </section>
 
-        <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 flex flex-col min-h-0 relative">
+  <section className="glass-panel border-white/10 p-4 min-h-0 relative flex flex-col">
           {joinedRoom ? (
             <>
               <div className="grid gap-4 lg:grid-cols-2 flex-1 min-h-0">

@@ -68,17 +68,17 @@ export default function Notes() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white/70 backdrop-blur-xl p-6 rounded-xl border border-slate-200">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900">New Note</h2>
+      <form onSubmit={handleSubmit} className="glass-panel border-white/10 p-6">
+        <h2 className="panel-title text-2xl">New Note</h2>
         <textarea
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
-          className="w-full h-32 bg-white border border-slate-200 text-slate-900 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-slate-600 placeholder-slate-400"
+          className="mt-4 h-36 w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-white placeholder-white/40 focus:outline-none"
           placeholder="Write your note here..."
         />
         <button
           type="submit"
-          className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+          className="primary-btn mt-4"
         >
           Save Note
         </button>
@@ -86,19 +86,19 @@ export default function Notes() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {notes.map((note) => (
-          <div key={note.id} className="bg-white/70 backdrop-blur-xl p-6 rounded-xl border border-slate-200">
+          <div key={note.id} className="glass-panel border-white/10 p-6">
             <div className="flex justify-between items-start mb-3">
               <span className="text-sm text-slate-500">
                 {format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}
               </span>
               <button
                 onClick={() => deleteNote(note.id)}
-                className="text-slate-600 hover:text-red-600 transition-colors"
+                className="text-white/60 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-slate-900 whitespace-pre-wrap">{note.content}</p>
+            <p className="whitespace-pre-wrap text-white/80">{note.content}</p>
           </div>
         ))}
       </div>

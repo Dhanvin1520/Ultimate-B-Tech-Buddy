@@ -236,19 +236,19 @@ export default function Chat() {
   const activeRoom = useMemo(() => rooms.find((room) => room.id === (joinedRoom || selectedRoom)), [rooms, selectedRoom, joinedRoom]);
 
   return (
-    <div className="bg-gray-900/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl h-[calc(100vh-7rem)] text-white flex flex-col gap-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="glass-panel h-[calc(100vh-9rem)] p-5 text-white">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>
-          <p className="text-xs uppercase text-gray-400 tracking-[0.2em]">Ultimate B-Tech Buddy</p>
-          <h2 className="text-2xl font-semibold">NST Community Chat</h2>
+          <p className="text-xs uppercase tracking-[0.4em] text-white/40">Ultimate B-Tech Buddy</p>
+          <h2 className="mt-2 font-display text-3xl">NST Community Chat</h2>
         </div>
-        <div className={`text-sm px-3 py-1 rounded-full border ${connected ? 'border-emerald-500 text-emerald-300' : 'border-red-500 text-red-300'}`}>
+        <div className={`rounded-full border px-4 py-1 text-sm ${connected ? 'border-emerald-400/60 text-emerald-200' : 'border-red-400/60 text-red-200'}`}>
           {connected ? 'Live' : 'Offline'}
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr] flex-1 min-h-0">
-        <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 flex flex-col">
+      <div className="grid gap-5 pt-5 lg:grid-cols-[320px_1fr] flex-1 min-h-0">
+        <section className="glass-panel border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs uppercase text-gray-400">Campus rooms</p>
@@ -262,8 +262,8 @@ export default function Chat() {
               return (
                 <div
                   key={room.id}
-                  className={`rounded-2xl border p-4 transition-colors ${
-                    isSelected ? 'border-blue-500 bg-gray-800' : 'border-gray-700 bg-gray-800/40'
+                  className={`rounded-2xl border p-4 transition-all ${
+                    isSelected ? 'border-white/40 bg-white/10 shadow-inner' : 'border-white/10 bg-white/5'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -271,18 +271,18 @@ export default function Chat() {
                       <p className="text-xs text-gray-400 uppercase tracking-wider">{room.id}</p>
                       <h4 className="text-base font-semibold text-white">{room.name}</h4>
                     </div>
-                    {isSelected && <span className="text-xs px-2 py-1 bg-blue-600/30 text-blue-200 rounded-full">Selected</span>}
+                    {isSelected && <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-200">Selected</span>}
                   </div>
                   <p className="text-sm text-gray-400 mt-2">{room.description}</p>
                   <div className="mt-3 flex gap-2">
                     <button
-                      className="px-3 py-1.5 text-sm rounded-lg border border-gray-600 text-gray-200 hover:border-blue-400"
+                      className="ghost-btn text-xs"
                       onClick={() => setSelectedRoom(room.id)}
                     >
                       {isSelected ? 'Stay here' : 'Preview'}
                     </button>
                     <button
-                      className="px-3 py-1.5 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600"
+                      className="primary-btn text-xs"
                       onClick={() => joinRoom(room.id)}
                     >
                       Join
@@ -294,7 +294,7 @@ export default function Chat() {
           </div>
         </section>
 
-        <section className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col min-h-0">
+        <section className="glass-panel border-white/10 p-4 sm:p-5 flex flex-col min-h-0">
           <div className="flex flex-wrap items-center gap-4 mb-4">
             <div>
               <p className="text-xs uppercase text-gray-400">Current room</p>
@@ -306,12 +306,12 @@ export default function Chat() {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-gray-800 text-white border border-gray-700"
+                className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white"
                 placeholder="Your name"
               />
               <button
                 onClick={() => joinRoom(selectedRoom)}
-                className="px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
+                className="primary-btn"
               >
                 {joinedRoom === selectedRoom ? 'Refresh history' : `Join ${selectedRoom === 'nst-commons' ? 'NST Commons' : 'NST Placements'}`}
               </button>
@@ -323,7 +323,7 @@ export default function Chat() {
             <>
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 custom-scrollbar"
+                className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-2"
               >
                 {messages.length === 0 && (
                   <div className="text-center text-gray-400 text-sm py-10">No posts yet. Say hi and start a thread!</div>
@@ -336,8 +336,8 @@ export default function Chat() {
                       key={msg.id}
                       className={`flex items-end gap-3 ${msg.system ? 'opacity-80' : ''} ${isMine ? 'flex-row-reverse' : ''}`}
                     >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isMine ? 'bg-blue-600' : 'bg-gray-800'}`}>
-                        <UserIcon className={`w-5 h-5 ${isMine ? 'text-white' : 'text-blue-400'}`} />
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isMine ? 'bg-amber-500/20 text-amber-200' : 'bg-white/5 text-white/60'}`}>
+                        <UserIcon className="h-5 w-5" />
                       </div>
                       <div className={`flex flex-col ${isMine ? 'items-end text-right' : ''}`}>
                         {!msg.system && (
@@ -347,12 +347,12 @@ export default function Chat() {
                           </div>
                         )}
                         <div
-                          className={`max-w-[80%] px-4 py-3 rounded-2xl mt-1 shadow-sm ${
+                          className={`mt-1 max-w-[80%] rounded-3xl px-4 py-3 shadow-inner ${
                             msg.system
-                              ? 'bg-gray-800 text-gray-300'
+                              ? 'bg-white/5 text-white/70'
                               : isMine
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-800 text-gray-100'
+                                ? 'bg-amber-500/30 text-white'
+                                : 'bg-white/10 text-white'
                           } ${msg.pending ? 'opacity-80' : ''}`}
                         >
                           {msg.text}
@@ -371,19 +371,19 @@ export default function Chat() {
 
               <form onSubmit={handleSend} className="mt-auto">
                 <div className="flex items-center gap-2">
-                  <button type="button" className="p-2 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                  <button type="button" className="ghost-btn h-12 w-12 rounded-2xl">
                     <Smile className="w-5 h-5" />
                   </button>
-                  <button type="button" className="p-2 rounded-xl bg-gray-800 border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700">
+                  <button type="button" className="ghost-btn h-12 w-12 rounded-2xl">
                     <Paperclip className="w-5 h-5" />
                   </button>
                   <input
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Post an update, drop a question..."
-                    className="flex-1 px-4 py-3 bg-gray-800 text-white rounded-2xl border border-gray-700 focus:outline-none"
+                    className="flex-1 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
                   />
-                  <button type="submit" className="px-5 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow-sm">
+                  <button type="submit" className="primary-btn flex items-center gap-2">
                     <Send className="w-5 h-5" />
                     <span className="hidden sm:inline">Send</span>
                   </button>

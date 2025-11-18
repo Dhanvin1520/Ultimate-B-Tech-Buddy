@@ -9,32 +9,31 @@ export default function Calendar() {
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   return (
-    <div className="bg-gray-800 p-6 rounded-xl">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-white">
-          {format(currentDate, 'MMMM yyyy')}
-        </h2>
-        <div className="space-x-2">
+    <div className="glass-panel p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.4em] text-white/40">Calendar</p>
+          <h2 className="panel-title text-2xl">{format(currentDate, 'MMMM yyyy')}</h2>
+        </div>
+        <div className="flex gap-2">
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}
-            className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+            className="ghost-btn"
           >
             Previous
           </button>
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}
-            className="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+            className="primary-btn"
           >
             Next
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2 text-center mb-2">
+      <div className="mb-2 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.3em] text-white/30">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="text-gray-400 font-medium">
-            {day}
-          </div>
+          <div key={day}>{day}</div>
         ))}
       </div>
 
@@ -42,10 +41,10 @@ export default function Calendar() {
         {days.map((day) => (
           <button
             key={day.toISOString()}
-            className={`p-2 rounded-lg text-center ${
+            className={`rounded-2xl border px-3 py-4 text-center text-sm transition-colors ${
               format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                ? 'border-amber-400/60 bg-amber-500/10 text-white shadow-inner'
+                : 'border-white/5 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'
             }`}
           >
             {format(day, 'd')}

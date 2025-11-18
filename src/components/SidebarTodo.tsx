@@ -92,31 +92,53 @@ export default function SidebarTodo() {
   const color = (p: Item['priority']) => p==='low'? 'bg-green-500': p==='medium'? 'bg-yellow-500': 'bg-red-500'
 
   return (
-    <div className="p-3 border-t border-slate-200">
-      <button onClick={() => setOpen(o=>!o)} className="w-full text-left text-slate-900 font-semibold flex justify-between items-center">
-        <span>Todo</span>
-        <span className="text-sm text-slate-600">{open? 'Hide': 'Show'}</span>
+    <div className="glass-panel border-white/10 p-3 flex flex-col rounded-2xl">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-white px-1 py-2">
+        <span className="font-semibold">Quick Todos</span>
+        <span className="text-sm text-white/50">{open ? 'Hide' : 'Show'}</span>
       </button>
+
       {open && (
-        <div className="mt-2 space-y-2">
-          <div className="flex gap-2 md:flex-row flex-col">
-            <input value={text} onChange={handleTextChange} placeholder="Add" className="flex-1 w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400" />
-            <div className="flex gap-2">
-              <select value={priority} onChange={handlePriorityChange} className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-slate-900 w-full md:w-auto">
+        <div className="mt-2 flex flex-col gap-2 min-h-0">
+          <div className="flex gap-2 items-center min-w-0">
+            <input
+              value={text}
+              onChange={handleTextChange}
+              placeholder="Add a task"
+              className="flex-1 min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-white"
+            />
+            <div className="flex items-center gap-2">
+              <select
+                value={priority}
+                onChange={handlePriorityChange}
+                className="rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-white text-sm shrink-0 w-20"
+              >
                 <option value="low">low</option>
                 <option value="medium">medium</option>
                 <option value="high">high</option>
               </select>
-              <button onClick={addItem} className="px-3 py-2 bg-slate-900 text-white rounded-lg w-full md:w-auto">Add</button>
+              <button onClick={addItem} className="primary-btn px-2 py-1 text-xs flex-shrink-0">
+                Add
+              </button>
             </div>
           </div>
-          <div className="space-y-2 max-h-40 md:max-h-56 overflow-auto pr-1">
-            {items.map(it => (
-              <div key={it.id} className="flex items-center gap-2 bg-white rounded-lg border border-slate-200 p-2">
+
+          <div className="mt-2 overflow-y-auto flex-1 max-h-44 pr-1 space-y-2">
+            {items.map((it) => (
+              <div key={it.id} className="flex items-center gap-2 rounded-lg border border-white/8 bg-black/20 px-2 py-2">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color(it.priority)}`} />
-                <input type="checkbox" checked={it.completed} onChange={()=>toggle(it.id)} className="rounded border-slate-400 text-slate-900 shrink-0" />
-                <span className={`flex-1 text-sm truncate ${it.completed? 'line-through text-slate-400':'text-slate-900'}`}>{it.content}</span>
-                <button onClick={()=>remove(it.id)} className="text-slate-500 hover:text-red-600 text-xs shrink-0">x</button>
+                <input
+                  type="checkbox"
+                  checked={it.completed}
+                  onChange={() => toggle(it.id)}
+                  className="rounded border-white/40 text-amber-300"
+                />
+                <span className={`flex-1 truncate ${it.completed ? 'text-white/40 line-through' : 'text-white/90'}`}>
+                  {it.content}
+                </span>
+                <button onClick={() => remove(it.id)} className="text-white/40 hover:text-red-400 px-2">
+                  ×
+                </button>
               </div>
             ))}
           </div>
