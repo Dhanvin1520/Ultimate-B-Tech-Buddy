@@ -10,9 +10,13 @@ interface Problem {
   status?: 'solved' | 'attempted' | 'todo';
 }
 
+type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard';
+type StatusFilter = 'all' | 'solved' | 'unsolved' | 'todo';
+
 export default function LeetCode() {
   const [problems, setProblems] = useState<Problem[]>([]);
-  const [filter, setFilter] = useState<string>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
@@ -72,35 +76,56 @@ export default function LeetCode() {
   ];
 
   useEffect(() => {
+    const seedCurated = () => setProblems(CURATED.map((p) => ({ ...p })));
+
     if (guest) {
       const stored = localStorage.getItem('guest-lc');
-      if (stored) setProblems(JSON.parse(stored));
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length) {
+            setProblems(parsed);
+            return;
+          }
+        } catch {}
+      }
+      seedCurated();
       return;
     }
+
     const load = async () => {
       try {
         const res = await api.get('/leetcode');
-        const list: Problem[] = res.data.map((p: any) => ({ id: p._id, title: p.title, difficulty: p.difficulty, url: p.url, status: p.status }));
-        setProblems(list);
-      } catch {}
+        const list: Problem[] = Array.isArray(res.data) ? res.data.map((p: any) => ({ id: p._id, title: p.title, difficulty: p.difficulty, url: p.url, status: p.status })) : [];
+        if (list.length) {
+          setProblems(list);
+        } else {
+          seedCurated();
+        }
+      } catch {
+        seedCurated();
+      }
     };
-    load();
-  }, []);
 
-  // seed curated problems for guests (only if no stored list)
-  useEffect(() => {
-    if (!guest) return;
-    if (problems.length > 0) return;
-    setProblems(CURATED.map((p) => ({ ...p })));
-  }, [guest, problems.length]);
+    load();
+  }, [guest]);
 
   useEffect(() => {
     if (guest) localStorage.setItem('guest-lc', JSON.stringify(problems));
   }, [problems]);
 
-  const solvedCount = problems.filter((p) => p.status === 'solved').length;
+  const normalizedStatus = (status?: Problem['status']) => (status === 'solved' ? 'solved' : 'todo');
+  const solvedCount = problems.filter((p) => normalizedStatus(p.status) === 'solved').length;
   const total = problems.length || 1;
-  const progress = Math.round((solvedCount / total) * 100);
+  const unsolvedCount = total - solvedCount;
+  const todoCount = problems.filter((p) => normalizedStatus(p.status) === 'todo').length;
+  const progressPercent = Math.max(6, Math.min(100, Math.round((solvedCount / total) * 100)));
+  const statusCounts: Record<StatusFilter, number> = {
+    all: problems.length,
+    solved: solvedCount,
+    unsolved: unsolvedCount,
+    todo: todoCount,
+  };
 
   const addProblem = async () => {
     if (!title.trim() || !url.trim()) return;
@@ -125,7 +150,8 @@ export default function LeetCode() {
   const toggleStatus = async (id: string) => {
     const current = problems.find((p) => p.id === id);
     if (!current) return;
-    const next: Problem['status'] = current.status === 'solved' ? 'attempted' : current.status === 'attempted' ? 'todo' : 'solved';
+    const isSolved = normalizedStatus(current.status) === 'solved';
+    const next: Problem['status'] = isSolved ? 'todo' : 'solved';
     if (guest) {
       setProblems((prev) => prev.map((p) => (p.id === id ? { ...p, status: next } : p)));
     } else {
@@ -147,9 +173,17 @@ export default function LeetCode() {
     }
   };
 
-  const filteredProblems = problems.filter((problem) =>
-    filter === 'all' || problem.difficulty.toLowerCase() === filter.toLowerCase()
-  );
+  const filteredProblems = problems.filter((problem) => {
+    const matchesDifficulty = difficultyFilter === 'all' || problem.difficulty === difficultyFilter;
+    const statusValue = normalizedStatus(problem.status);
+    const matchesStatus = (() => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'unsolved') return statusValue !== 'solved';
+      if (statusFilter === 'todo') return statusValue === 'todo';
+      return statusValue === 'solved';
+    })();
+    return matchesDifficulty && matchesStatus;
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
@@ -165,24 +199,28 @@ export default function LeetCode() {
       <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="panel-title text-2xl">LeetCode Problems</h2>
-          <div className="mt-2 flex items-center gap-3">
-            <div className="pill">{solvedCount} solved</div>
-            <div className="muted">{total} problems</div>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/70">
+            <span>{solvedCount} solved</span>
+            <span>•</span>
+            <span>{unsolvedCount} remaining</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-48 h-3 bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600" style={{ width: `${Math.max(6, Math.min(100, Math.round((solvedCount / total) * 100)))}%` }} />
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-48 h-3 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <span className="text-xs text-white/60 whitespace-nowrap">{solvedCount}/{total}</span>
           </div>
 
-          <div className="flex gap-2">
-            {['all', 'easy', 'medium', 'hard'].map((type) => (
+          <div className="flex gap-2 flex-wrap">
+            {(['all', 'easy', 'medium', 'hard'] as DifficultyFilter[]).map((type) => (
               <button
                 key={type}
-                onClick={() => setFilter(type)}
-                className={`rounded-2xl px-3 py-1 text-sm capitalize ${
-                  filter === type ? 'bg-amber-500/20 text-white' : 'border border-white/10 text-white/60'
+                onClick={() => setDifficultyFilter(type)}
+                className={`rounded-2xl px-3 py-1 text-sm capitalize transition ${
+                  difficultyFilter === type ? 'bg-amber-500/20 text-white border border-amber-400/40' : 'border border-white/10 text-white/60'
                 }`}
               >
                 {type}
@@ -190,6 +228,21 @@ export default function LeetCode() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {(['all', 'solved', 'unsolved', 'todo'] as StatusFilter[]).map((type) => (
+          <button
+            key={type}
+            onClick={() => setStatusFilter(type)}
+            className={`rounded-2xl px-3 py-1 text-sm capitalize transition ${
+              statusFilter === type ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/30' : 'border border-white/10 text-white/60'
+            }`}
+          >
+            {type}
+            <span className="ml-2 text-xs text-white/40">{statusCounts[type]}</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -222,33 +275,50 @@ export default function LeetCode() {
       </div>
 
       <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-2">
-        {filteredProblems.map((problem) => (
-          <div
-            key={problem.id}
-            className="flex items-center justify-between rounded-3xl border border-white/10 bg-white/5 p-4"
-          >
-            <div className="cursor-pointer" onClick={() => toggleStatus(problem.id)}>
-              <h3 className="text-lg font-medium text-white">{problem.title}</h3>
-              <div className="mt-1 flex items-center gap-3 text-sm">
-                <span className={getDifficultyColor(problem.difficulty)}>{problem.difficulty}</span>
-                <span className="text-white/60">{problem.status || 'todo'}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={problem.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ghost-btn h-11 w-11 rounded-2xl"
-              >
-                <ExternalLink className="w-5 h-5" />
-              </a>
-              <button onClick={() => removeProblem(problem.id)} className="ghost-btn h-11 w-11 rounded-2xl hover:text-red-400">
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
+        {filteredProblems.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-center text-white/60">
+            No problems in this view yet. Add one above or switch filters.
           </div>
-        ))}
+        ) : (
+          filteredProblems.map((problem) => {
+            const currentStatus = normalizedStatus(problem.status);
+            const statusLabel = currentStatus === 'solved' ? 'Solved' : 'Unsolved';
+            const cyclingLabel = currentStatus === 'solved' ? 'Mark unsolved' : 'Mark solved';
+            return (
+              <div
+                key={problem.id}
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-white/10 bg-white/5 p-4"
+              >
+                <div className="cursor-pointer" onClick={() => toggleStatus(problem.id)}>
+                  <h3 className="text-lg font-medium text-white">{problem.title}</h3>
+                  <div className="mt-1 flex items-center flex-wrap gap-3 text-sm">
+                    <span className={getDifficultyColor(problem.difficulty)}>{problem.difficulty}</span>
+                    <span className="text-white/60">{statusLabel}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => toggleStatus(problem.id)}
+                    className="rounded-2xl border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-white/70 hover:border-amber-400/60"
+                  >
+                    {cyclingLabel}
+                  </button>
+                  <a
+                    href={problem.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ghost-btn h-11 w-11 rounded-2xl"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </a>
+                  <button onClick={() => removeProblem(problem.id)} className="ghost-btn h-11 w-11 rounded-2xl hover:text-red-400">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

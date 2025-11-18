@@ -33,13 +33,60 @@ export default function Chat() {
   const [rooms, setRooms] = useState<CampusRoom[]>(FALLBACK_ROOMS);
   const [selectedRoom, setSelectedRoom] = useState(() => localStorage.getItem('chat_room') || DEFAULT_ROOM);
   const [joinedRoom, setJoinedRoom] = useState<string>('');
-  const [name, setName] = useState(localStorage.getItem('chat_name') || 'Anonymous');
+  const [name, setName] = useState('Anonymous');
+  const [nameLoading, setNameLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const isBrowser = typeof window !== 'undefined';
   const [messages, setMessages] = useState<Message[]>([]);
+  const [roomsOpen, setRoomsOpen] = useState(() => (isBrowser ? window.innerWidth >= 1024 : false));
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingTimersRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const stored = localStorage.getItem('chat_name');
+    if (stored) {
+      setName(stored);
+      setNameLoading(false);
+      return;
+    }
+    const resolveName = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        const apiName = res.data?.username || res.data?.name || res.data?.email?.split?.('@')[0];
+        const finalName = apiName?.toString().trim() || 'Anonymous';
+        setName(finalName);
+        localStorage.setItem('chat_name', finalName);
+      } catch (err) {
+        const fallback = localStorage.getItem('guest') === 'true' ? 'Anonymous' : 'NST Student';
+        setName(fallback);
+        localStorage.setItem('chat_name', fallback);
+      } finally {
+        setNameLoading(false);
+      }
+    };
+    resolveName();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const sync = (event?: MediaQueryListEvent) => {
+      const matches = event ? event.matches : mq.matches;
+      setRoomsOpen(matches);
+    };
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  const collapseRoomsOnMobile = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth < 1024) {
+      setRoomsOpen(false);
+    }
+  }, []);
 
   useEffect(() => {
     // gently keep the latest message in view whenever content changes
@@ -168,7 +215,8 @@ export default function Chat() {
     setMessages([]);
     localStorage.setItem('chat_room', nextRoom);
     localStorage.setItem('chat_name', name);
-  }, [name, selectedRoom]);
+    collapseRoomsOnMobile();
+  }, [name, selectedRoom, collapseRoomsOnMobile]);
 
   const handleSend = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -236,7 +284,7 @@ export default function Chat() {
   const activeRoom = useMemo(() => rooms.find((room) => room.id === (joinedRoom || selectedRoom)), [rooms, selectedRoom, joinedRoom]);
 
   return (
-    <div className="glass-panel h-[calc(100vh-9rem)] p-5 text-white">
+    <div className="glass-panel flex flex-col flex-1 p-5 text-white min-h-[calc(100vh-7rem)] overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/40">Ultimate B-Tech Buddy</p>
@@ -247,8 +295,20 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="grid gap-5 pt-5 lg:grid-cols-[320px_1fr] flex-1 min-h-0">
-        <section className="glass-panel border-white/10 p-4">
+      <div className="mt-4 flex flex-col gap-4 lg:grid lg:grid-cols-[340px_1fr] lg:gap-5 flex-1 min-h-0">
+        <button
+          className="lg:hidden rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm flex items-center justify-between"
+          onClick={() => setRoomsOpen((prev) => !prev)}
+        >
+          <span className="font-medium">{roomsOpen ? 'Hide rooms' : 'Browse rooms'}</span>
+          <svg className={`h-4 w-4 transition-transform ${roomsOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        <section
+          className={`glass-panel border-white/10 p-4 flex flex-col min-h-0 overflow-hidden ${roomsOpen ? 'block' : 'hidden'} lg:block`}
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs uppercase text-gray-400">Campus rooms</p>
@@ -256,7 +316,7 @@ export default function Chat() {
             </div>
             <span className="text-xs text-gray-500">History: 30 days</span>
           </div>
-          <div className="space-y-3 overflow-y-auto pr-1">
+          <div className="space-y-3 overflow-y-auto pr-1 flex-1 min-h-0">
             {rooms.map((room) => {
               const isSelected = room.id === (joinedRoom || selectedRoom);
               return (
@@ -266,15 +326,24 @@ export default function Chat() {
                     isSelected ? 'border-white/40 bg-white/10 shadow-inner' : 'border-white/10 bg-white/5'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">{room.id}</p>
-                      <h4 className="text-base font-semibold text-white">{room.name}</h4>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-sm font-semibold text-white/80">
+                      {room.name
+                        .split(' ')
+                        .map((chunk) => chunk.charAt(0))
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </div>
-                    {isSelected && <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-200">Selected</span>}
+                    <div className="min-w-0">
+                      <p className="text-base font-semibold text-white leading-tight">{room.name}</p>
+                      <p className="text-xs text-gray-400 leading-tight">{room.description}</p>
+                    </div>
+                    {isSelected && (
+                      <span className="ml-auto text-[11px] uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/40 rounded-full px-3 py-0.5">Joined</span>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-400 mt-2">{room.description}</p>
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       className="ghost-btn text-xs"
                       onClick={() => setSelectedRoom(room.id)}
@@ -294,7 +363,7 @@ export default function Chat() {
           </div>
         </section>
 
-        <section className="glass-panel border-white/10 p-4 sm:p-5 flex flex-col min-h-0">
+        <section className="glass-panel border-white/10 p-4 sm:p-5 flex flex-col min-h-0 overflow-hidden">
           <div className="flex flex-wrap items-center gap-4 mb-4">
             <div>
               <p className="text-xs uppercase text-gray-400">Current room</p>
@@ -302,16 +371,15 @@ export default function Chat() {
               <p className="text-sm text-gray-400">{activeRoom?.description || 'Pick NST Commons or NST Placements to start chatting.'}</p>
             </div>
             <div className="ml-auto flex flex-col gap-2 min-w-[220px]">
-              <label className="text-xs text-gray-400 uppercase tracking-wide">Display name</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white"
-                placeholder="Your name"
-              />
+              <p className="text-xs uppercase text-gray-400">Posting as</p>
+              <div className="rounded-2xl border border-white/10 bg-black/30 px-3 py-2 text-white text-sm flex items-center gap-2">
+                <UserIcon className="w-4 h-4 text-white/60" />
+                <span className="truncate">{nameLoading ? 'Loading…' : name}</span>
+              </div>
               <button
                 onClick={() => joinRoom(selectedRoom)}
-                className="primary-btn"
+                disabled={nameLoading}
+                className="primary-btn disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {joinedRoom === selectedRoom ? 'Refresh history' : `Join ${selectedRoom === 'nst-commons' ? 'NST Commons' : 'NST Placements'}`}
               </button>
@@ -320,10 +388,10 @@ export default function Chat() {
           <p className="text-xs text-gray-500 mb-4">You’ll automatically see every message shared in this room for the last 30 days.</p>
 
           {joinedRoom ? (
-            <>
+            <div className="flex flex-col flex-1 min-h-0 gap-4">
               <div
                 ref={messagesContainerRef}
-                className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-2"
+                className="custom-scrollbar flex-1 space-y-3 overflow-y-auto pr-2 min-h-0"
               >
                 {messages.length === 0 && (
                   <div className="text-center text-gray-400 text-sm py-10">No posts yet. Say hi and start a thread!</div>
@@ -347,12 +415,12 @@ export default function Chat() {
                           </div>
                         )}
                         <div
-                          className={`mt-1 max-w-[80%] rounded-3xl px-4 py-3 shadow-inner ${
+                          className={`mt-1 max-w-[min(75vw,32rem)] w-fit rounded-3xl px-4 py-3 shadow-inner break-words ${
                             msg.system
-                              ? 'bg-white/5 text-white/70'
+                              ? 'bg-black/10 text-white/70'
                               : isMine
                                 ? 'bg-amber-500/30 text-white'
-                                : 'bg-white/10 text-white'
+                                : 'bg-black/12 text-white'
                           } ${msg.pending ? 'opacity-80' : ''}`}
                         >
                           {msg.text}
@@ -369,7 +437,7 @@ export default function Chat() {
                 <div ref={messagesEndRef} />
               </div>
 
-              <form onSubmit={handleSend} className="mt-auto">
+              <form onSubmit={handleSend} className="mt-1">
                 <div className="flex items-center gap-2">
                   <button type="button" className="ghost-btn h-12 w-12 rounded-2xl">
                     <Smile className="w-5 h-5" />
@@ -381,7 +449,7 @@ export default function Chat() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Post an update, drop a question..."
-                    className="flex-1 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none"
+                    className="flex-1 rounded-3xl border border-white/10 bg-black/20 px-4 py-3 text-white focus:outline-none min-h-12"
                   />
                   <button type="submit" className="primary-btn flex items-center gap-2">
                     <Send className="w-5 h-5" />
@@ -389,7 +457,7 @@ export default function Chat() {
                   </button>
                 </div>
               </form>
-            </>
+            </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center text-center text-gray-400 gap-3">
               <WifiOff className="w-10 h-10 text-gray-500" />

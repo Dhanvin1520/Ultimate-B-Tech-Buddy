@@ -357,7 +357,7 @@ export default function VideoChat() {
 
   return (
     <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-5 text-white">
-      <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6">
+      <div className="glass-panel relative flex flex-wrap items-center justify-between gap-3 overflow-hidden p-6">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl" />
           <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl" />
@@ -421,10 +421,21 @@ export default function VideoChat() {
           )}
         </section>
 
-  <section className="glass-panel border-white/10 p-4 min-h-0 relative flex flex-col">
+        <section className="glass-panel border-white/10 p-4 min-h-0 relative flex flex-col overflow-hidden">
           {joinedRoom ? (
             <>
-              <div className="grid gap-4 lg:grid-cols-2 flex-1 min-h-0">
+              <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-white/70">
+                <div>
+                  <p className="uppercase text-[11px] tracking-[0.4em] text-white/40">Now in</p>
+                  <p className="text-lg font-semibold text-white">{joinedRoom}</p>
+                </div>
+                <div className="ml-auto flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3 py-1">
+                  <Users className="w-4 h-4 text-white/60" />
+                  <span>{1 + remotePeers.length} participant{remotePeers.length === 0 ? '' : 's'}</span>
+                </div>
+              </div>
+              <div className="custom-scrollbar flex-1 min-h-0 overflow-y-auto pr-2">
+                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-[minmax(220px,_1fr)]">
                 <div className="relative rounded-2xl bg-black overflow-hidden aspect-video transition-all">
                   {!localStream && (
                     <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">Waiting for camera...</div>
@@ -437,12 +448,13 @@ export default function VideoChat() {
                     Share the room ID with a friend. They’ll appear here.
                   </div>
                 )}
-                {remotePeers.map(({ peerId, userName }) => (
-                  <div key={peerId} className="relative rounded-2xl bg-black overflow-hidden aspect-video transition-all">
-                    <video id={`remote-${peerId}`} autoPlay playsInline className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 left-2 text-xs bg-black/60 px-2 py-1 rounded-full">{userName}</div>
-                  </div>
-                ))}
+                  {remotePeers.map(({ peerId, userName }) => (
+                    <div key={peerId} className="relative rounded-2xl bg-black overflow-hidden aspect-video transition-all">
+                      <video id={`remote-${peerId}`} autoPlay playsInline className="w-full h-full object-cover" />
+                      <div className="absolute bottom-2 left-2 text-xs bg-black/60 px-2 py-1 rounded-full">{userName}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
               {/* Floating glass controls bar */}
               <div className="pointer-events-none absolute left-0 right-0 bottom-6 flex justify-center">
