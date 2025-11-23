@@ -6,7 +6,7 @@ import api from '../../lib/api';
 interface Note {
   id: string;
   content: string;
-  createdAt: string; 
+  createdAt: string;
 }
 
 export default function Notes() {
@@ -14,47 +14,89 @@ export default function Notes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const guest = localStorage.getItem('guest') === 'true';
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
+    const normalizeNotes = (raw: any[]): Note[] =>
+      raw
+        .filter(Boolean)
+        .map((note: any, index: number) => ({
+          id: String(note?._id || note?.id || `note-${index}`),
+          content: note?.content || note?.title || '',
+          createdAt: note?.updatedAt || note?.createdAt || new Date().toISOString(),
+        }))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const storedNotes = localStorage.getItem('my-notes');
+    if (storedNotes) {
+      try {
+        setNotes(normalizeNotes(JSON.parse(storedNotes)));
+      } catch {
+        // ignore malformed cache
+      }
+    }
+
     if (guest) {
-      const storedNotes = localStorage.getItem('my-notes');
-      if (storedNotes) setNotes(JSON.parse(storedNotes));
+      setIsLoaded(true);
       return;
     }
+
     const load = async () => {
       try {
         const res = await api.get('/notes');
-        const list: Note[] = res.data.map((n: any) => ({ id: n._id, content: n.content || n.title || '', createdAt: n.createdAt || new Date().toISOString() }));
+        const list: Note[] = Array.isArray(res.data) ? normalizeNotes(res.data) : [];
         setNotes(list);
-      } catch {}
+      } catch (error) {
+        console.error('Failed to fetch notes:', error);
+      } finally {
+        setIsLoaded(true);
+      }
     };
+
     load();
-  }, []);
+  }, [guest]);
 
   useEffect(() => {
-    if (guest) localStorage.setItem('my-notes', JSON.stringify(notes));
-  }, [notes]);
+    if (isLoaded) {
+      localStorage.setItem('my-notes', JSON.stringify(notes));
+    }
+  }, [notes, isLoaded]);
 
   const addNote = async (content: string) => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
     if (guest) {
-      const newNote: Note = { id: crypto.randomUUID(), content, createdAt: new Date().toISOString() };
+      const newNote: Note = { id: crypto.randomUUID(), content: trimmed, createdAt: new Date().toISOString() };
       setNotes((prevNotes) => [newNote, ...prevNotes]);
-    } else {
-      try {
-        const res = await api.post('/notes', { title: content.slice(0, 20) || 'Note', content });
-        const n = res.data;
-        setNotes((prev) => [{ id: n._id, content: n.content || '', createdAt: n.createdAt || new Date().toISOString() }, ...prev]);
-      } catch {}
+      return;
+    }
+
+    const tempId = crypto.randomUUID();
+    const optimistic: Note = { id: tempId, content: trimmed, createdAt: new Date().toISOString() };
+    setNotes((prevNotes) => [optimistic, ...prevNotes]);
+
+    try {
+      const res = await api.post('/notes', { title: trimmed.slice(0, 20) || 'Note', content: trimmed });
+      const saved = res.data || {};
+      const persisted: Note = {
+        id: String(saved._id || tempId),
+        content: saved.content || trimmed,
+        createdAt: saved.createdAt || optimistic.createdAt,
+      };
+      setNotes((prevNotes) => prevNotes.map((note) => (note.id === tempId ? persisted : note)));
+    } catch (error) {
+      console.error('Failed to save note:', error);
     }
   };
 
   const deleteNote = async (id: string) => {
-    if (guest) {
-      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-    } else {
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+
+    if (!guest) {
       try {
         await api.delete(`/notes/${id}`);
-        setNotes((prev) => prev.filter((n) => n.id !== id));
-      } catch {}
+      } catch { }
     }
   };
 
@@ -68,37 +110,39 @@ export default function Notes() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="glass-panel border-white/10 p-6">
-        <h2 className="panel-title text-2xl">New Note</h2>
+      <form onSubmit={handleSubmit} className="swiss-card p-6">
+        <h2 className="heading-lg heading-gamer mb-4">New Note</h2>
         <textarea
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
-          className="mt-4 h-36 w-full rounded-2xl border border-white/10 bg-white/5 p-3 text-white placeholder-white/40 focus:outline-none"
+          className="input-swiss h-36 resize-none"
           placeholder="Write your note here..."
         />
-        <button
-          type="submit"
-          className="primary-btn mt-4"
-        >
-          Save Note
-        </button>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="submit"
+            className="btn-primary"
+          >
+            Save Note
+          </button>
+        </div>
       </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {notes.map((note) => (
-          <div key={note.id} className="glass-panel border-white/10 p-6">
+          <div key={note.id} className="swiss-card p-6 hover:border-[var(--border-strong)] transition-colors">
             <div className="flex justify-between items-start mb-3">
-              <span className="text-sm text-slate-500">
+              <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-widest">
                 {format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}
               </span>
               <button
                 onClick={() => deleteNote(note.id)}
-                className="text-white/60 hover:text-red-400 transition-colors"
+                className="text-[var(--text-secondary)] hover:text-red-600 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-            <p className="whitespace-pre-wrap text-white/80">{note.content}</p>
+            <p className="whitespace-pre-wrap text-[var(--text-primary)] leading-relaxed">{note.content}</p>
           </div>
         ))}
       </div>

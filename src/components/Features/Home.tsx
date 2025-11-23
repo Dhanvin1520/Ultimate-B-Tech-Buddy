@@ -1,347 +1,654 @@
-import { useEffect, useMemo, useState } from 'react';
-import { MessageCircle, NotebookPen, Radio, Video, BookOpen, Code, Sparkles, Heart, ListChecks, ChevronRight, ShieldCheck, Link2, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+	Video,
+	MessageCircle,
+	Radio,
+	BookOpen,
+	Code,
+	ListChecks,
+	ArrowRight,
+	Calendar,
+	Clock,
+	Gamepad2,
+	Terminal,
+	NotebookPen,
+	Play,
+	SkipBack,
+	SkipForward
+} from 'lucide-react';
 import api from '../../lib/api';
+import HeatMap from '../HeatMap';
 
-type HomeProps = {
-	setActiveSection?: (section: string) => void;
+// Typewriter Component
+const Typewriter = ({ text, className }: { text: string; className?: string }) => {
+	const [displayedText, setDisplayedText] = useState('');
+	const [currentIndex, setCurrentIndex] = useState(0);
+
+	useEffect(() => {
+		if (currentIndex < text.length) {
+			const timeout = setTimeout(() => {
+				setDisplayedText((prev) => prev + text[currentIndex]);
+				setCurrentIndex((prev) => prev + 1);
+			}, 100); // Typing speed
+			return () => clearTimeout(timeout);
+		}
+	}, [currentIndex, text]);
+
+	return (
+		<span className={`${className} inline-block`}>
+			{displayedText}
+			<span className="animate-pulse text-[var(--accent-color)]">_</span>
+		</span>
+	);
 };
 
-interface FavoriteSong { title: string; artist: string; }
-interface TodoItem { content: string; completed: boolean; priority: 'low' | 'medium' | 'high'; }
-interface LeetProblem { id: string; title: string; status?: 'solved' | 'todo'; difficulty: string; }
+// Define types locally to avoid import issues
+interface TodoItem {
+	id: string;
+	text: string;
+	completed: boolean;
+	priority?: 'low' | 'medium' | 'high';
+}
 
-const shortcuts = [
-	{ label: 'Community Chat', description: 'NST Commons, placements & more', icon: MessageCircle, section: 'Chat' },
-	{ label: 'Video Pods', description: 'Peer rooms for labs & mock interviews', icon: Video, section: 'Video Chat' },
-	{ label: 'Notes & Tasks', description: 'Pin ideas and todo bursts', icon: NotebookPen, section: 'Notes' },
-	{ label: 'Music & Focus', description: 'Ambient playlists & timers', icon: Radio, section: 'Spotify' },
-	{ label: 'LeetCode Board', description: 'Curated problems & streaks', icon: Code, section: 'LeetCode' },
-	{ label: 'Resume Desk', description: 'Polish PDFs & intro decks', icon: BookOpen, section: 'Resume' },
+interface HomeProps {
+	setActiveSection: (section: string) => void;
+}
+
+const SAMPLE_TASKS: TodoItem[] = [
+	{ id: 'sample-1', text: 'Complete React Project', completed: false, priority: 'high' },
+	{ id: 'sample-2', text: 'Review DSA Notes', completed: true, priority: 'medium' },
+	{ id: 'sample-3', text: 'Practice LeetCode', completed: false, priority: 'high' }
 ];
 
-export default function Home({ setActiveSection }: HomeProps) {
-	const [userName, setUserName] = useState('NST Student');
-	const [userEmail, setUserEmail] = useState('');
-	const [favoriteSongs, setFavoriteSongs] = useState<FavoriteSong[]>([]);
-	const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
-	const [leetcodeProblems, setLeetcodeProblems] = useState<LeetProblem[]>([]);
-	const guest = localStorage.getItem('guest') === 'true';
+const TASK_PREVIEW_LIMIT = 4;
+const GUEST_LEET_PROGRESS = { easy: 45, medium: 32, hard: 8 } as const;
+const HOME_SPOTIFY_COVER = 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=900&q=80';
 
-	const go = (s: string) => {
-		if (setActiveSection) return setActiveSection(s);
-		localStorage.setItem('activeSection', s);
-		window.location.reload();
+const normalizeTasks = (tasks: any[]): TodoItem[] =>
+	tasks
+		.filter(Boolean)
+		.map((task, index) => ({
+			id: String(task?._id || task?.id || `task-${index}`),
+			text: task?.title || task?.content || task?.text || 'Untitled Task',
+			completed: Boolean(task?.completed),
+			priority: ['low', 'medium', 'high'].includes(task?.priority) ? task.priority : undefined,
+		}));
+
+
+export const Home = ({ setActiveSection }: HomeProps) => {
+	// State Management
+	const [userName, setUserName] = useState('User');
+	const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+	const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+	const [newTaskText, setNewTaskText] = useState('');
+	const [isCreatingTask, setIsCreatingTask] = useState(false);
+	const [taskLoadingMap, setTaskLoadingMap] = useState<Record<string, boolean>>({});
+
+	const persistGuestTasks = (next: TodoItem[]) => {
+		setTodoItems(next);
+		localStorage.setItem('guest-tasks', JSON.stringify(next));
 	};
 
-	useEffect(() => {
-		const storedName = localStorage.getItem('chat_name');
-		if (storedName) setUserName(storedName);
+	// Determine guest status early for state initialization
+	const isGuest = localStorage.getItem('guest') === 'true';
 
-		const loadUser = async () => {
+	// LeetCode Progress - Dummy data for guests, real for logged-in users
+	const [leetSolved, setLeetSolved] = useState(() =>
+		isGuest ? { ...GUEST_LEET_PROGRESS } : { easy: 0, medium: 0, hard: 0 }
+	);
+
+	// Fetch real user data and personalized widgets for logged-in users
+	useEffect(() => {
+		const loadGuestSummary = () => {
 			try {
-				const res = await api.get('/auth/me');
-				if (res.data?.username) setUserName(res.data.username);
-				if (res.data?.email) setUserEmail(res.data.email);
-			} catch {}
-		};
-		if (!guest) loadUser();
-	}, [guest]);
+				const storedTasks = localStorage.getItem('guest-tasks');
+				if (storedTasks) {
+					const parsed = JSON.parse(storedTasks);
+					setTodoItems(normalizeTasks(parsed));
+				} else {
+					setTodoItems([...SAMPLE_TASKS]);
+				}
+			} catch {
+				setTodoItems([...SAMPLE_TASKS]);
+			}
 
-	useEffect(() => {
-		if (guest) {
-			const fav = localStorage.getItem('fav-songs');
-			if (fav) setFavoriteSongs(JSON.parse(fav));
-			const todos = localStorage.getItem('sidebar-todos');
-			if (todos) setTodoItems(JSON.parse(todos));
-			const lc = localStorage.getItem('guest-lc');
-			if (lc) setLeetcodeProblems(JSON.parse(lc));
+			setLeetSolved({ ...GUEST_LEET_PROGRESS });
+			setIsSummaryLoading(false);
+		};
+
+		if (isGuest) {
+			loadGuestSummary();
 			return;
 		}
 
-		const loadCloudData = async () => {
+		let isActive = true;
+
+		const fetchData = async () => {
+			setIsSummaryLoading(true);
 			try {
-				const [songsRes, tasksRes, lcRes] = await Promise.all([
-					api.get('/songs').catch(() => ({ data: [] })),
-					api.get('/tasks').catch(() => ({ data: [] })),
-					api.get('/leetcode').catch(() => ({ data: [] })),
+				const [tasksRes, lcRes, userRes] = await Promise.allSettled([
+					api.get('/tasks'),
+					api.get('/leetcode'),
+					api.get('/auth/me'),
 				]);
-				setFavoriteSongs(songsRes.data?.map((s: any) => ({ title: s.title, artist: s.artist })) ?? []);
-				setTodoItems(tasksRes.data?.map((t: any) => ({ content: t.title, completed: !!t.completed, priority: t.priority || 'medium' })) ?? []);
-				setLeetcodeProblems(lcRes.data?.map((p: any) => ({ id: p._id, title: p.title, status: p.status, difficulty: p.difficulty })) ?? []);
-			} catch {}
+
+				if (!isActive) return;
+
+				if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value.data)) {
+					setTodoItems(normalizeTasks(tasksRes.value.data));
+				} else {
+					setTodoItems([]);
+				}
+
+				if (lcRes.status === 'fulfilled' && Array.isArray(lcRes.value.data)) {
+					const solvedCounts = lcRes.value.data.reduce(
+						(acc, problem) => {
+							if (problem?.status !== 'solved') return acc;
+							const key = String(problem?.difficulty || '').toLowerCase();
+							if (key === 'easy') acc.easy += 1;
+							else if (key === 'medium') acc.medium += 1;
+							else if (key === 'hard') acc.hard += 1;
+							return acc;
+						},
+						{ easy: 0, medium: 0, hard: 0 }
+					);
+					setLeetSolved(solvedCounts);
+				}
+
+				if (userRes.status === 'fulfilled' && userRes.value.data) {
+					const profile = userRes.value.data;
+					if (profile.username) {
+						setUserName(profile.username);
+					} else if (profile.name) {
+						setUserName(profile.name);
+					}
+				}
+			} catch (err) {
+				console.error('Failed to load personalized widgets:', err);
+			} finally {
+				if (isActive) {
+					setIsSummaryLoading(false);
+				}
+			}
 		};
-		loadCloudData();
-	}, [guest]);
 
-	const leetSolved = useMemo(() => leetcodeProblems.filter((p) => (p.status ?? 'todo') === 'solved').length, [leetcodeProblems]);
-	const leetTotal = leetcodeProblems.length || 1;
-	const leetUnsolved = leetTotal - leetSolved;
-	const leetPercent = Math.round((leetSolved / leetTotal) * 100);
-	const leetHighlights = useMemo(() => leetcodeProblems.filter((p) => (p.status ?? 'todo') !== 'solved').slice(0, 3), [leetcodeProblems]);
-	const openTodos = todoItems.filter((t) => !t.completed).length;
-	const completedTodos = todoItems.length - openTodos;
-	const topSongs = favoriteSongs.slice(0, 4);
+		fetchData();
 
-	const primaryName = userName.split(' ')[0] || 'there';
-	const chatRoomsPreview = [
-		{ id: 'nst-commons', name: 'NST Commons', status: 'Active • 38 online' },
-		{ id: 'nst-placements', name: 'Placements', status: 'Interviews week' },
+		return () => {
+			isActive = false;
+		};
+	}, [isGuest]);
+
+	// Navigation Helper
+	const go = (s: string) => {
+		setActiveSection(s);
+	};
+
+	// Data Loading Effects
+	useEffect(() => {
+		const storedName = localStorage.getItem('chat_name');
+		if (storedName) setUserName(storedName);
+	}, []);
+
+
+
+	// Feature Configuration
+	const utilityFeatures = [
+		{ title: 'Notes', description: 'Knowledge base.', icon: <NotebookPen className="w-5 h-5" /> },
+		{ title: 'Calendar', description: 'Schedule sync.', icon: <Calendar className="w-5 h-5" /> },
+		{ title: 'Tasks', description: 'Mission tracking.', icon: <ListChecks className="w-5 h-5" /> },
+		{ title: 'LeetCode', description: 'Skill refinement.', icon: <Code className="w-5 h-5" /> },
+		{ title: 'Timer', description: 'Focus enforcement.', icon: <Clock className="w-5 h-5" /> },
+		{ title: 'Spotify', description: 'Audio environment.', icon: <Radio className="w-5 h-5" /> },
+		{ title: 'Resume', description: 'Career profile.', icon: <BookOpen className="w-5 h-5" /> },
+		{ title: 'Games', description: 'Neural recharge.', icon: <Gamepad2 className="w-5 h-5" /> },
 	];
-	const videoStats = [
-		{ label: 'Pods live', value: '02', meta: 'NST Commons · Pods' },
-		{ label: 'Peers synced', value: '11', meta: 'Avg latency 34ms' },
-		{ label: 'Room slots', value: '04', meta: 'Seats open right now' },
-	];
-	const videoSignals = [
-		{ title: 'Instant invite', description: 'Drop pod.nst links straight from chat', icon: Link2 },
-		{ title: 'Lock controls', description: 'Stage, mute, and admit with one tap', icon: ShieldCheck },
-		{ title: '6-seat grid', description: 'Perfect for labs & mock panels', icon: Users },
-	];
+
+	const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+	const taskPreview = todoItems.slice(0, TASK_PREVIEW_LIMIT);
+	const isTaskEmpty = !isSummaryLoading && taskPreview.length === 0;
+	const totalSolved = leetSolved.easy + leetSolved.medium + leetSolved.hard;
+	const canSubmitTask = newTaskText.trim().length > 0 && !isCreatingTask;
+
+	const handleQuickTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const trimmed = newTaskText.trim();
+		if (!trimmed) return;
+
+		if (isGuest) {
+			const guestTask: TodoItem = { id: crypto.randomUUID(), text: trimmed, completed: false };
+			persistGuestTasks([guestTask, ...todoItems]);
+			setNewTaskText('');
+			return;
+		}
+
+		setIsCreatingTask(true);
+		try {
+			const res = await api.post('/tasks', { title: trimmed, completed: false });
+			const normalized = normalizeTasks([res.data])[0];
+			if (normalized) {
+				setTodoItems((prev) => [normalized, ...prev]);
+			}
+			setNewTaskText('');
+		} catch (error) {
+			console.error('Failed to add task from Home:', error);
+		} finally {
+			setIsCreatingTask(false);
+		}
+	};
+
+	const handleToggleTask = async (taskId: string) => {
+		const task = todoItems.find((t) => t.id === taskId);
+		if (!task) return;
+		const originalCompleted = task.completed;
+		const nextCompleted = !originalCompleted;
+
+		if (isGuest) {
+			persistGuestTasks(todoItems.map((t) => (t.id === taskId ? { ...t, completed: nextCompleted } : t)));
+			return;
+		}
+
+		setTaskLoadingMap((prev) => ({ ...prev, [taskId]: true }));
+		setTodoItems((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: nextCompleted } : t)));
+
+		try {
+			await api.put(`/tasks/${taskId}`, { completed: nextCompleted });
+		} catch (error) {
+			console.error('Failed to toggle task:', error);
+			setTodoItems((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: originalCompleted } : t)));
+		} finally {
+			setTaskLoadingMap((prev) => {
+				const next = { ...prev };
+				delete next[taskId];
+				return next;
+			});
+		}
+	};
 
 	return (
-		<div className="space-y-8">
-			<section className="grid gap-5 lg:grid-cols-2">
-				<div className="glass-panel hero-gradient p-7 flex flex-col gap-6 min-h-[280px]">
-					<div>
-						<p className="text-xs uppercase tracking-[0.4em] text-amber-200">Chat Command Center</p>
-						<h1 className="text-3xl font-extrabold text-white leading-tight">Hi {primaryName}, your rooms are waiting.</h1>
-						<p className="text-white/70 mt-2 text-sm sm:text-base">Hop into NST Commons, sync with placements, or spin up a new topic without losing the vibe.</p>
-					</div>
-					<div className="space-y-3">
-						{chatRoomsPreview.map((room) => (
-							<div key={room.id} className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 flex items-center justify-between">
-								<div>
-									<p className="text-white font-semibold">{room.name}</p>
-									<p className="text-xs text-white/50">{room.status}</p>
+		<div className="space-y-0 animate-fade-in pb-12">
+			{/* Welcome Section - Top Left */}
+			<section className="bg-[var(--bg-page)] pt-8 pb-6 px-6 border-b border-[var(--border-color)]">
+				<div className="max-w-7xl mx-auto">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-6">
+							{/* Terminal Icon */}
+							<div className="relative group">
+								<div className="w-20 h-20 rounded-xl bg-black border-2 border-gray-300 p-0.5 flex items-center justify-center">
+									<Terminal className="w-10 h-10 text-white" />
 								</div>
-								<button onClick={() => go('Chat')} className="text-xs text-amber-200 hover:text-amber-100 inline-flex items-center gap-1">
-									Open <ChevronRight className="w-3 h-3" />
+							</div>
+
+							{/* Welcome Text - Bigger */}
+							<div>
+								<div className="flex items-center gap-3 mb-2">
+									<span className="text-lg font-mono text-[var(--text-secondary)]">Welcome back,</span>
+									<div className="px-3 py-1 bg-[rgba(0,32,255,0.05)] border border-[var(--accent-color)] text-[var(--accent-color)] text-xs font-mono font-bold uppercase tracking-wider">
+										ONLINE
+									</div>
+								</div>
+								<h1 className="text-5xl md:text-6xl font-bold">
+									<Typewriter text={userName} className="heading-gamer" />
+								</h1>
+							</div>
+						</div>
+
+						{/* Login Button for Guests */}
+						{isGuest && (
+							<div className="flex flex-col items-end gap-2">
+								<p className="text-[10px] font-mono font-bold text-red-500 uppercase tracking-widest animate-pulse">
+									⚠ Restricted Access Mode
+								</p>
+								<button
+									onClick={() => {
+										localStorage.removeItem('guest');
+										window.location.reload();
+									}}
+									className="relative group px-8 py-4 bg-black border-2 border-red-500 rounded-xl overflow-hidden hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,0,0,0.3)]"
+								>
+									<div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+									<div className="relative flex items-center gap-3">
+										<div className="flex flex-col items-end">
+											<span className="text-white font-bold font-mono uppercase tracking-wide text-sm">Login </span>
+											<span className="text-[10px] text-red-500 font-mono uppercase tracking-widest">&gt;&gt; Access Full Features &lt;&lt;</span>
+										</div>
+										<Terminal className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />
+									</div>
 								</button>
 							</div>
-						))}
-					</div>
-					<div className="flex flex-wrap gap-3">
-						<button onClick={() => go('Chat')} className="primary-btn px-5 py-3 text-base flex items-center gap-2">
-							<Sparkles className="w-4 h-4" /> Jump into chat
-						</button>
-						<button onClick={() => go('Notes')} className="ghost-btn px-5 py-3">Drop a quick note</button>
-					</div>
-					<div className="relative mt-4">
-						<svg viewBox="0 0 420 180" className="w-full h-auto rounded-2xl border border-white/5" xmlns="http://www.w3.org/2000/svg">
-							<rect width="420" height="180" rx="18" fill="url(#chatGradient)" />
-							<defs>
-								<linearGradient id="chatGradient" x1="0" y1="0" x2="420" y2="180" gradientUnits="userSpaceOnUse">
-									<stop stopColor="#14192b" />
-									<stop offset="1" stopColor="#24120f" />
-								</linearGradient>
-							</defs>
-							<rect x="32" y="34" width="200" height="44" rx="12" fill="#ffb34722" />
-							<rect x="32" y="90" width="260" height="44" rx="12" fill="#ffffff10" />
-							<rect x="250" y="42" width="140" height="32" rx="12" fill="#ffffff08" />
-							<rect x="280" y="106" width="100" height="28" rx="12" fill="#ff6a0030" />
-						</svg>
-					</div>
-				</div>
-
-				<div className="glass-panel p-6 flex flex-col justify-between min-h-[320px] relative overflow-hidden bg-gradient-to-br from-[#0b1221] via-[#0f0f19] to-[#1a0f17]">
-					<div className="absolute inset-0 pointer-events-none">
-						<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,186,90,0.18),_transparent_60%)]" />
-						<div className="absolute -top-10 -right-16 h-56 w-56 bg-emerald-500/20 blur-[110px]" />
-						<div className="absolute -bottom-16 left-1/3 h-40 w-40 bg-amber-500/10 blur-[90px]" />
-					</div>
-					<div className="relative space-y-4">
-						<div className="flex items-center gap-3">
-							<span className="pill bg-emerald-200/10 text-emerald-200 border border-emerald-200/20">Video pods</span>
-							<p className="text-xs text-white/60">Always-on campus mesh</p>
-						</div>
-						<h2 className="text-3xl font-bold text-white leading-tight max-w-2xl">Spin up a face-to-face room in seconds.</h2>
-						<p className="text-white/70 text-sm sm:text-base max-w-2xl">Secure P2P rooms for labs, mock interviews, or lightning syncs. Invite, lock, and screen share without leaving your dashboard.</p>
-					</div>
-					<div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-						{videoStats.map((stat) => (
-							<div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-								<p className="text-[11px] uppercase tracking-[0.3em] text-white/60">{stat.label}</p>
-								<div className="mt-2 text-3xl font-semibold text-white">{stat.value}</div>
-								<p className="text-xs text-white/50">{stat.meta}</p>
-							</div>
-						))}
-					</div>
-					<div className="relative grid gap-3 sm:grid-cols-3 mt-4">
-						{videoSignals.map((signal) => (
-							<div key={signal.title} className="rounded-2xl border border-white/5 bg-black/30 p-3 flex gap-3 items-start">
-								<div className="h-10 w-10 rounded-xl bg-white/10 text-amber-200 flex items-center justify-center">
-									<signal.icon className="w-4 h-4" />
-								</div>
-								<div className="min-w-0">
-									<p className="text-sm text-white font-semibold">{signal.title}</p>
-									<p className="text-xs text-white/60 leading-snug">{signal.description}</p>
-								</div>
-							</div>
-						))}
-					</div>
-					<div className="relative flex flex-wrap gap-2 mt-4">
-						<button onClick={() => go('Video Chat')} className="primary-btn px-5 py-2 text-sm">Open video pods</button>
-						<button onClick={() => go('Chat')} className="ghost-btn px-5 py-2 text-sm">Share room link</button>
-					</div>
-				</div>
-			</section>
-
-			<section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-				<div className="glass-panel p-6 flex flex-col gap-4">
-					<div className="flex items-center gap-3">
-						<div className="h-12 w-12 rounded-2xl bg-amber-500/20 text-2xl font-semibold text-amber-200 flex items-center justify-center">
-							{userName.charAt(0).toUpperCase()}
-						</div>
-						<div>
-							<p className="text-sm text-white/60">Signed in as</p>
-							<p className="text-lg font-semibold text-white">{userName}</p>
-							{userEmail && <p className="text-xs text-white/50">{userEmail}</p>}
-						</div>
-					</div>
-					<div className="grid grid-cols-2 gap-3 text-sm">
-						<div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-							<p className="text-white/50">LeetCode progress</p>
-							<div className="mt-2 text-2xl font-semibold text-white">{leetSolved}/{leetTotal}</div>
-							<div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-								<div className="h-full bg-gradient-to-r from-amber-400 to-amber-600" style={{ width: `${leetPercent}%` }} />
-							</div>
-						</div>
-						<div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-							<p className="text-white/50">Open todos</p>
-							<div className="mt-2 text-2xl font-semibold text-white">{openTodos}</div>
-							<p className="text-xs text-white/50">{completedTodos} completed</p>
-						</div>
-					</div>
-					<button onClick={() => go('LeetCode')} className="text-left text-sm text-amber-200 hover:text-amber-100 inline-flex items-center gap-2">
-						Peek practice board <ChevronRight className="w-4 h-4" />
-					</button>
-				</div>
-
-				<div className="grid gap-5 sm:grid-cols-2">
-					<div className="glass-panel p-5 flex flex-col gap-2 border-white/10">
-						<p className="text-white/50 text-sm">Solved problems</p>
-						<div className="text-3xl font-semibold text-white">{leetSolved}</div>
-						<p className="text-xs text-white/40">{leetUnsolved} left this week</p>
-					</div>
-					<div className="glass-panel p-5 flex flex-col gap-2 border-white/10">
-						<p className="text-white/50 text-sm">Saved tracks</p>
-						<div className="text-3xl font-semibold text-white">{favoriteSongs.length}</div>
-						<p className="text-xs text-white/40">Pinned inside Spotify tab</p>
-					</div>
-					<div className="glass-panel p-5 flex flex-col gap-2 border-white/10">
-						<p className="text-white/50 text-sm">Quick todos</p>
-						<div className="text-3xl font-semibold text-white">{openTodos}</div>
-						<p className="text-xs text-white/40">{todoItems.length} total tracked</p>
-					</div>
-					<div className="glass-panel p-5 flex flex-col gap-2 border-white/10">
-						<p className="text-white/50 text-sm">Pods spun up</p>
-						<div className="text-3xl font-semibold text-white">3</div>
-						<p className="text-xs text-white/40">Past 24 hours</p>
-					</div>
-				</div>
-			</section>
-
-			<section className="grid gap-6 lg:grid-cols-2">
-				<div className="glass-panel p-6 space-y-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="pill">Practice stack</p>
-							<h3 className="text-2xl font-semibold text-white">LeetCode tracker</h3>
-						</div>
-						<button onClick={() => go('LeetCode')} className="ghost-btn text-sm">Open board</button>
-					</div>
-					<div className="space-y-3">
-						{leetHighlights.length === 0 ? (
-							<p className="text-sm text-white/60">All curated problems are solved — great job!</p>
-						) : (
-							leetHighlights.map((p) => (
-								<div key={p.id} className="rounded-2xl border border-white/10 bg-black/20 p-4 flex items-center gap-3">
-									<div className="h-8 w-8 rounded-xl bg-amber-400/10 text-amber-200 flex items-center justify-center text-xs uppercase">
-										{p.difficulty.slice(0, 1)}
-									</div>
-									<div className="min-w-0">
-										<p className="text-white font-medium truncate">{p.title}</p>
-										<p className="text-xs text-white/40">{p.difficulty}</p>
-									</div>
-									<span className="ml-auto text-xs text-white/50">Queued</span>
-								</div>
-							))
 						)}
 					</div>
 				</div>
+			</section>
 
-				<div className="glass-panel p-6 space-y-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="pill">Favorites</p>
-							<h3 className="text-2xl font-semibold text-white">Saved songs</h3>
-						</div>
-						<button onClick={() => go('Spotify')} className="ghost-btn text-sm">Open Spotify</button>
-					</div>
-					{topSongs.length === 0 ? (
-						<p className="text-sm text-white/60">No favorites yet. Save tracks from the Spotify tab to see them here.</p>
-					) : (
-						<div className="space-y-3">
-							{topSongs.map((song, idx) => (
-								<div key={`${song.title}-${idx}`} className="rounded-2xl border border-white/10 bg-black/20 p-4 flex items-center gap-3">
-									<div className="text-lg font-semibold text-white/70 w-6 text-center">{idx + 1}</div>
-									<div className="min-w-0">
-										<p className="text-white font-medium truncate">{song.title}</p>
-										<p className="text-xs text-white/50 truncate">{song.artist}</p>
-									</div>
-									<Heart className="w-4 h-4 text-red-400 ml-auto" />
-								</div>
-							))}
-						</div>
-					)}
+			{/* Heat Map Section - Simplified */}
+			<section
+				className="bg-[var(--bg-page)] py-6 px-6 border-b border-[var(--border-color)] relative overflow-hidden"
+				onMouseMove={(e) => {
+					const rect = e.currentTarget.getBoundingClientRect();
+					const x = ((e.clientX - rect.left) / rect.width) * 100;
+					const y = ((e.clientY - rect.top) / rect.height) * 100;
+					setMousePos({ x, y });
+				}}
+			>
+				{/* Cursor Glow Effect */}
+				<div
+					className="absolute inset-0 pointer-events-none"
+					style={{
+						background: `radial-gradient(circle 600px at ${mousePos.x}% ${mousePos.y}%, rgba(0, 204, 255, 0.08), transparent 70%)`
+					}}
+				/>
+
+				<div className="w-full relative z-10">
+					<HeatMap weeks={52} />
 				</div>
 			</section>
 
-			<section className="glass-panel p-6 space-y-4">
-				<div className="flex items-center justify-between">
-					<div>
-						<p className="pill">Shortcuts</p>
-						<h3 className="text-2xl font-semibold text-white">Launch anything instantly</h3>
-						<p className="text-sm text-white/60">Navigate to core tools in a tap — BTech Buddy keeps favorite surfaces one hop away.</p>
-					</div>
-				</div>
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{shortcuts.map((shortcut) => (
+			{/* Connect with Study Buddies */}
+			<section className="py-8 px-6 border-b border-[var(--border-color)]">
+				<div className="max-w-7xl mx-auto">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{/* Video Chat Card */}
 						<button
-							key={shortcut.section}
-							onClick={() => go(shortcut.section)}
-							className="rounded-2xl border border-white/10 bg-black/30 p-4 text-left hover:border-amber-400/40 transition"
+							onClick={() => go('Video Chat')}
+							className="card-entrance card-entrance-delay-1 group relative text-left overflow-hidden rounded-xl h-64 bg-black border-2 border-gray-800 hover:border-green-500 hover:scale-[1.02] transition-all duration-500"
 						>
-							<shortcut.icon className="w-5 h-5 text-amber-300" />
-							<p className="mt-3 font-semibold text-white">{shortcut.label}</p>
-							<p className="text-xs text-white/50">{shortcut.description}</p>
+							<div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 via-black to-gray-900/20 opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+							{/* Animated Background Grid */}
+							<div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)]"></div>
+
+							<div className="relative z-10 h-full p-6 flex flex-col justify-between">
+								<div>
+									<div className="flex items-center gap-3 mb-4">
+										<div className="p-2 bg-gray-800 rounded-lg border border-gray-700 group-hover:border-gray-500 transition-colors">
+											<Video className="w-8 h-8 text-white animate-pulse" />
+										</div>
+										<span className="px-3 py-1 bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-mono font-bold uppercase tracking-wider animate-pulse">
+											● LIVE NOW
+										</span>
+									</div>
+									<h3 className="text-4xl font-bold mb-3 text-white tracking-tight transition-colors">
+										Video Chat
+									</h3>
+									<div className="h-12">
+										<p className="text-gray-400 font-mono text-sm leading-relaxed">
+											<Typewriter text=">> Connect with buddies near you..." className="text-gray-300" />
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-2 text-white font-mono text-sm font-bold opacity-80 group-hover:opacity-100 group-hover:text-green-500 group-hover:scale-110 transition-all duration-300 origin-left">
+									<span>INITIALIZE CONNECTION</span>
+									<ArrowRight className="w-4 h-4" />
+								</div>
+							</div>
 						</button>
-					))}
+
+						{/* Chat Card */}
+						<button
+							onClick={() => go('Chat')}
+							className="card-entrance card-entrance-delay-2 group relative text-left overflow-hidden rounded-xl h-64 bg-black border-2 border-gray-800 hover:border-green-500 hover:scale-[1.02] transition-all duration-500"
+						>
+							<div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 via-black to-gray-900/20 opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+							{/* Animated Background Grid */}
+							<div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)]"></div>
+
+							<div className="relative z-10 h-full p-6 flex flex-col justify-between">
+								<div>
+									<div className="flex items-center gap-3 mb-4">
+										<div className="p-2 bg-gray-800 rounded-lg border border-gray-700 group-hover:border-gray-500 transition-colors">
+											<MessageCircle className="w-8 h-8 text-white" />
+										</div>
+										<span className="px-3 py-1 bg-green-500/15 border border-green-400/60 text-green-300 text-xs font-mono font-bold uppercase tracking-wider">
+											24/7 ONLINE
+										</span>
+									</div>
+									<h3 className="text-4xl font-bold mb-3 text-white tracking-tight transition-colors">
+										Chat
+									</h3>
+									<div className="h-12">
+										<p className="text-gray-400 font-mono text-sm leading-relaxed">
+											Join the community network.
+											<span className="block text-gray-500 text-xs mt-1 animate-pulse">&gt;&gt;</span>
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-2 text-white font-mono text-sm font-bold opacity-80 group-hover:opacity-100 group-hover:text-green-500 group-hover:scale-110 transition-all duration-300 origin-left">
+									<span>ENTER CHANNEL</span>
+									<ArrowRight className="w-4 h-4" />
+								</div>
+							</div>
+						</button>
+					</div>
 				</div>
 			</section>
 
-			<section className="glass-panel p-6">
-				<div className="flex items-center gap-3 mb-4">
-					<ListChecks className="w-5 h-5 text-amber-300" />
-					<div>
-						<p className="pill mb-1">Quick Todos</p>
-						<h3 className="text-xl font-semibold text-white">What’s next today</h3>
+			{/* Todo List & Notes Snapshot */}
+			<section className="py-8 px-6 border-b border-[var(--border-color)]">
+				<div className="max-w-7xl mx-auto">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+						<div className="swiss-card p-6 border-2 border-gray-300 shadow-[0_0_15px_rgba(200,200,200,0.15)]">
+							<div className="flex items-center justify-between mb-6">
+								<h2 className="heading-lg heading-gamer">My Tasks</h2>
+								<button onClick={() => go('Tasks')} className="text-xs font-bold uppercase tracking-widest text-[var(--accent-color)] hover:opacity-80 transition-opacity">
+									View All
+								</button>
+							</div>
+							<form onSubmit={handleQuickTaskSubmit} className="flex flex-col gap-3 mb-4 sm:flex-row">
+								<input
+									value={newTaskText}
+									onChange={(e) => setNewTaskText(e.target.value)}
+									placeholder={isGuest ? 'Add a quick task (guest)' : 'Add a quick task'}
+									className="input-swiss flex-1"
+								/>
+								<button
+									type="submit"
+									className="btn-primary h-[46px]"
+									disabled={!canSubmitTask}
+								>
+									{isCreatingTask ? 'Adding...' : 'Add Task'}
+								</button>
+							</form>
+							{isSummaryLoading ? (
+								<p className="text-center text-[var(--text-tertiary)] text-sm py-6">Loading tasks...</p>
+							) : isTaskEmpty ? (
+								<p className="text-center text-[var(--text-tertiary)] text-sm py-6">No tasks yet. Add one from the Tasks panel.</p>
+							) : (
+								<div className="space-y-3">
+									{taskPreview.map((item) => (
+										<div key={item.id} className="flex items-center gap-4 p-4 border border-[var(--border-color)] hover:bg-[var(--bg-subtle)] transition-colors">
+											<input
+												type="checkbox"
+												onChange={() => handleToggleTask(item.id)}
+												checked={item.completed}
+												disabled={Boolean(taskLoadingMap[item.id])}
+												className="w-5 h-5 rounded-none border-2 border-[var(--text-secondary)] disabled:opacity-50"
+											/>
+											<span className={`flex-1 font-medium ${item.completed ? 'line-through text-[var(--text-tertiary)]' : 'text-[var(--text-primary)]'}`}>
+												{item.text}
+											</span>
+											{item.priority && (
+												<span className={`px-2 py-0.5 text-xs font-mono font-bold uppercase ${item.priority === 'high' ? 'bg-red-500 text-white' :
+													item.priority === 'medium' ? 'bg-yellow-500 text-black' :
+														'bg-green-500 text-white'
+													}`}>{item.priority}</span>
+											)}
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+
+						<div className="swiss-card p-6 border-2 border-gray-300 shadow-[0_0_15px_rgba(200,200,200,0.15)] flex flex-col gap-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">Soundstage</p>
+									<h2 className="heading-lg heading-gamer">Focus Flow Mix</h2>
+								</div>
+								<button
+									type="button"
+									onClick={() => go('Spotify')}
+									className="btn-primary text-xs font-bold uppercase tracking-widest"
+								>
+									Open Spotify
+								</button>
+							</div>
+
+							<button
+								type="button"
+								onClick={() => go('Spotify')}
+								className="relative h-64 w-full overflow-hidden border border-[var(--border-color)] group"
+							>
+								<img
+									src={HOME_SPOTIFY_COVER}
+									alt="Focus Flow cover art"
+									className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+								/>
+								<div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+								<div className="relative z-10 h-full w-full p-5 flex flex-col justify-end text-left">
+									<p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/70">Ambient Coding Session</p>
+									<h3 className="text-3xl font-semibold text-white">Focus Flow</h3>
+									<p className="text-sm text-white/80">45 min synthwave + lofi blend curated for deep work</p>
+								</div>
+							</button>
+
+							<div className="flex flex-col gap-4">
+								<div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
+									<span>Focus Level · 92%</span>
+									<span>7 tracks queued</span>
+								</div>
+								<div className="flex items-center justify-center gap-6">
+									<button
+										type="button"
+										onClick={() => go('Spotify')}
+										className="p-3 border border-[var(--border-color)] rounded-full text-[var(--text-secondary)] hover:text-[var(--accent-color)]"
+									>
+										<SkipBack className="w-5 h-5" />
+									</button>
+									<button
+										type="button"
+										onClick={() => go('Spotify')}
+										className="w-16 h-16 rounded-full btn-primary flex items-center justify-center"
+									>
+										<Play className="w-6 h-6 ml-1" />
+									</button>
+									<button
+										type="button"
+										onClick={() => go('Spotify')}
+										className="p-3 border border-[var(--border-color)] rounded-full text-[var(--text-secondary)] hover:text-[var(--accent-color)]"
+									>
+										<SkipForward className="w-5 h-5" />
+									</button>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
-				{todoItems.length === 0 ? (
-					<p className="text-sm text-white/60">Add action items from the sidebar todo widget — they’ll sync here automatically.</p>
-				) : (
-					<div className="space-y-2">
-						{todoItems.slice(0, 4).map((todo, idx) => (
-							<div key={`${todo.content}-${idx}`} className="rounded-xl border border-white/10 bg-black/20 p-3 flex items-center gap-3">
-								<span className={`h-2.5 w-2.5 rounded-full ${todo.priority === 'high' ? 'bg-red-400' : todo.priority === 'medium' ? 'bg-yellow-400' : 'bg-emerald-400'}`} />
-								<p className={`flex-1 text-sm ${todo.completed ? 'text-white/40 line-through' : 'text-white/80'}`}>{todo.content}</p>
-								<span className={`text-xs ${todo.completed ? 'text-emerald-300' : 'text-white/40'}`}>{todo.completed ? 'Done' : 'Pending'}</span>
+			</section>
+
+			{/* LeetCode Tracker */}
+			<section className="py-8 px-6 border-b border-[var(--border-color)]">
+				<div className="max-w-7xl mx-auto">
+					<div className="swiss-card p-6 border-2 border-gray-300 shadow-[0_0_15px_rgba(200,200,200,0.15)]">
+						<div className="flex items-center justify-between mb-6">
+							<h2 className="heading-lg heading-gamer">LeetCode Progress</h2>
+							<div className="px-3 py-1 bg-green-500 text-white text-xs font-mono font-bold uppercase">
+								{isGuest ? 'DEMO' : 'LIVE'}
 							</div>
+						</div>
+
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+							{/* Easy Problems */}
+							<div className="space-y-3">
+								<div className="flex items-center justify-between">
+									<span className="text-sm font-bold text-green-600">Easy</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.easy}/749</span>
+								</div>
+								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+									<div
+										className="h-full bg-green-500 transition-all duration-500"
+										style={{ width: `${(leetSolved.easy / 749) * 100}%` }}
+									></div>
+								</div>
+							</div>
+
+							{/* Medium Problems */}
+							<div className="space-y-3">
+								<div className="flex items-center justify-between">
+									<span className="text-sm font-bold text-yellow-600">Medium</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.medium}/1563</span>
+								</div>
+								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+									<div
+										className="h-full bg-yellow-500 transition-all duration-500"
+										style={{ width: `${(leetSolved.medium / 1563) * 100}%` }}
+									></div>
+								</div>
+							</div>
+
+							{/* Hard Problems */}
+							<div className="space-y-3">
+								<div className="flex items-center justify-between">
+									<span className="text-sm font-bold text-red-600">Hard</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.hard}/688</span>
+								</div>
+								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+									<div
+										className="h-full bg-red-500 transition-all duration-500"
+										style={{ width: `${(leetSolved.hard / 688) * 100}%` }}
+									></div>
+								</div>
+							</div>
+						</div>
+
+						{/* Total Progress */}
+						<div className="mt-6 pt-6 border-t border-[var(--border-color)]">
+							<div className="flex items-center justify-between mb-3">
+								<span className="font-bold text-[var(--text-primary)]">Total Solved</span>
+								<span className="text-2xl font-mono font-bold heading-gamer">
+									{totalSolved}/3000
+								</span>
+							</div>
+							<div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+								<div
+									className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-500"
+									style={{ width: `${(totalSolved / 3000) * 100}%` }}
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* Shortcuts Grid */}
+			<section className="py-8 px-6">
+				<div className="max-w-7xl mx-auto">
+					<h2 className="heading-lg heading-gamer mb-6">Quick Access</h2>
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+						{utilityFeatures.map((feature) => (
+							<button
+								key={feature.title}
+								onClick={() => go(feature.title)}
+								className="group p-6 bg-[var(--bg-page)] border-2 border-gray-300 shadow-[0_0_15px_rgba(200,200,200,0.15)] hover:shadow-[0_0_25px_rgba(0,204,255,0.3)] transition-all hover:scale-105 rounded-lg"
+							>
+								<div className="flex flex-col items-center gap-3 text-center">
+									<div className="text-[var(--accent-color)] group-hover:scale-110 transition-transform">
+										{feature.icon}
+									</div>
+									<div>
+										<h3 className="font-bold text-sm uppercase tracking-tight font-mono">{feature.title}</h3>
+										<p className="text-xs text-[var(--text-tertiary)] mt-1">{feature.description}</p>
+									</div>
+								</div>
+							</button>
 						))}
 					</div>
-				)}
+				</div>
 			</section>
 		</div>
 	);
-}
+};
+
+// Default export to match Dashboard.tsx import
+export default Home;

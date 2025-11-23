@@ -75,6 +75,8 @@ export default function LeetCode() {
     { id: '50', title: 'Find Minimum in Rotated Sorted Array', difficulty: 'medium', url: 'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array', status: 'todo' },
   ];
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     const seedCurated = () => setProblems(CURATED.map((p) => ({ ...p })));
 
@@ -85,34 +87,35 @@ export default function LeetCode() {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length) {
             setProblems(parsed);
-            return;
+          } else {
+            seedCurated();
           }
-        } catch {}
-      }
-      seedCurated();
-      return;
-    }
-
-    const load = async () => {
-      try {
-        const res = await api.get('/leetcode');
-        const list: Problem[] = Array.isArray(res.data) ? res.data.map((p: any) => ({ id: p._id, title: p.title, difficulty: p.difficulty, url: p.url, status: p.status })) : [];
-        if (list.length) {
-          setProblems(list);
-        } else {
-          seedCurated();
-        }
-      } catch {
+        } catch { seedCurated(); }
+      } else {
         seedCurated();
       }
-    };
-
-    load();
-  }, [guest]);
+    } else {
+      const load = async () => {
+        try {
+          const res = await api.get('/leetcode');
+          const list: Problem[] = Array.isArray(res.data) ? res.data.map((p: any) => ({ id: p._id, title: p.title, difficulty: p.difficulty, url: p.url, status: p.status })) : [];
+          if (list.length) {
+            setProblems(list);
+          } else {
+            seedCurated();
+          }
+        } catch {
+          seedCurated();
+        }
+      };
+      load();
+    }
+    setIsLoaded(true);
+  }, []);
 
   useEffect(() => {
-    if (guest) localStorage.setItem('guest-lc', JSON.stringify(problems));
-  }, [problems]);
+    if (guest && isLoaded) localStorage.setItem('guest-lc', JSON.stringify(problems));
+  }, [problems, isLoaded]);
 
   const normalizedStatus = (status?: Problem['status']) => (status === 'solved' ? 'solved' : 'todo');
   const solvedCount = problems.filter((p) => normalizedStatus(p.status) === 'solved').length;
@@ -143,7 +146,7 @@ export default function LeetCode() {
         setTitle('');
         setUrl('');
         setDifficulty('easy');
-      } catch {}
+      } catch { }
     }
   };
 
@@ -158,7 +161,7 @@ export default function LeetCode() {
       try {
         await api.put(`/leetcode/${id}`, { status: next });
         setProblems((prev) => prev.map((p) => (p.id === id ? { ...p, status: next } : p)));
-      } catch {}
+      } catch { }
     }
   };
 
@@ -169,7 +172,7 @@ export default function LeetCode() {
       try {
         await api.delete(`/leetcode/${id}`);
         setProblems((prev) => prev.filter((p) => p.id !== id));
-      } catch {}
+      } catch { }
     }
   };
 
@@ -187,31 +190,31 @@ export default function LeetCode() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
-      case 'easy': return 'text-green-400';
-      case 'medium': return 'text-yellow-400';
-      case 'hard': return 'text-red-400';
-      default: return 'text-gray-400';
+      case 'easy': return 'text-green-600';
+      case 'medium': return 'text-yellow-600';
+      case 'hard': return 'text-red-600';
+      default: return 'text-[var(--text-tertiary)]';
     }
   };
 
   return (
-    <div className="glass-panel border-white/10 p-6 flex flex-col gap-6">
-      <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="swiss-card p-6 flex flex-col gap-8">
+      <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h2 className="panel-title text-2xl">LeetCode Problems</h2>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/70">
+          <h2 className="heading-lg heading-gamer">LeetCode Problems</h2>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
             <span>{solvedCount} solved</span>
             <span>•</span>
             <span>{unsolvedCount} remaining</span>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-48 h-3 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-400 to-amber-600" style={{ width: `${progressPercent}%` }} />
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-48 h-2 bg-[var(--bg-subtle)] overflow-hidden">
+              <div className="h-full bg-[var(--accent-color)]" style={{ width: `${progressPercent}%` }} />
             </div>
-            <span className="text-xs text-white/60 whitespace-nowrap">{solvedCount}/{total}</span>
+            <span className="text-xs font-bold text-[var(--text-primary)]">{solvedCount}/{total}</span>
           </div>
 
           <div className="flex gap-2 flex-wrap">
@@ -219,9 +222,10 @@ export default function LeetCode() {
               <button
                 key={type}
                 onClick={() => setDifficultyFilter(type)}
-                className={`rounded-2xl px-3 py-1 text-sm capitalize transition ${
-                  difficultyFilter === type ? 'bg-amber-500/20 text-white border border-amber-400/40' : 'border border-white/10 text-white/60'
-                }`}
+                className={`px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors border ${difficultyFilter === type
+                  ? 'bg-[var(--text-primary)] text-white border-[var(--text-primary)]'
+                  : 'bg-transparent text-[var(--text-secondary)] border-[var(--border-color)] hover:border-[var(--text-primary)]'
+                  }`}
               >
                 {type}
               </button>
@@ -230,76 +234,79 @@ export default function LeetCode() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 border-b border-[var(--border-color)] pb-4">
         {(['all', 'solved', 'unsolved', 'todo'] as StatusFilter[]).map((type) => (
           <button
             key={type}
             onClick={() => setStatusFilter(type)}
-            className={`rounded-2xl px-3 py-1 text-sm capitalize transition ${
-              statusFilter === type ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/30' : 'border border-white/10 text-white/60'
-            }`}
+            className={`px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors ${statusFilter === type
+              ? 'text-[var(--accent-color)] border-b-2 border-[var(--accent-color)]'
+              : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+              }`}
           >
             {type}
-            <span className="ml-2 text-xs text-white/40">{statusCounts[type]}</span>
+            <span className="ml-2 text-[10px] opacity-60">{statusCounts[type]}</span>
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
-          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
+          placeholder="Problem Title"
+          className="input-swiss"
         />
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="URL"
-          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-white/40"
+          placeholder="Problem URL"
+          className="input-swiss"
         />
         <div className="flex gap-2">
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as any)}
-            className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white"
+            className="flex-1 input-swiss bg-transparent"
           >
-            <option value="easy">easy</option>
-            <option value="medium">medium</option>
-            <option value="hard">hard</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
           </select>
-          <button onClick={addProblem} className="primary-btn">
+          <button onClick={addProblem} className="btn-primary h-[46px]">
             Add
           </button>
         </div>
       </div>
 
-      <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-2">
+      <div className="space-y-0 overflow-y-auto max-h-[60vh] border-t border-[var(--border-color)]">
         {filteredProblems.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-black/20 p-6 text-center text-white/60">
-            No problems in this view yet. Add one above or switch filters.
+          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm font-medium">
+            No problems found in this view.
           </div>
         ) : (
           filteredProblems.map((problem) => {
             const currentStatus = normalizedStatus(problem.status);
             const statusLabel = currentStatus === 'solved' ? 'Solved' : 'Unsolved';
-            const cyclingLabel = currentStatus === 'solved' ? 'Mark unsolved' : 'Mark solved';
+            const cyclingLabel = currentStatus === 'solved' ? 'Mark Unsolved' : 'Mark Solved';
             return (
               <div
                 key={problem.id}
-                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-white/10 bg-white/5 p-4"
+                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 border-b border-[var(--border-color)] hover:bg-[var(--bg-subtle)] transition-colors group"
               >
                 <div className="cursor-pointer" onClick={() => toggleStatus(problem.id)}>
-                  <h3 className="text-lg font-medium text-white">{problem.title}</h3>
-                  <div className="mt-1 flex items-center flex-wrap gap-3 text-sm">
+                  <h3 className={`text-base font-bold ${currentStatus === 'solved' ? 'text-[var(--text-tertiary)] line-through' : 'text-[var(--text-primary)]'}`}>
+                    {problem.title}
+                  </h3>
+                  <div className="mt-1 flex items-center flex-wrap gap-3 text-xs font-bold uppercase tracking-widest">
                     <span className={getDifficultyColor(problem.difficulty)}>{problem.difficulty}</span>
-                    <span className="text-white/60">{statusLabel}</span>
+                    <span className="text-[var(--text-tertiary)]">{statusLabel}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => toggleStatus(problem.id)}
-                    className="rounded-2xl border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-white/70 hover:border-amber-400/60"
+                    className="btn-outline py-1 px-3 text-xs h-8"
                   >
                     {cyclingLabel}
                   </button>
@@ -307,12 +314,12 @@ export default function LeetCode() {
                     href={problem.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ghost-btn h-11 w-11 rounded-2xl"
+                    className="btn-ghost h-8 w-8 p-0"
                   >
-                    <ExternalLink className="w-5 h-5" />
+                    <ExternalLink className="w-4 h-4" />
                   </a>
-                  <button onClick={() => removeProblem(problem.id)} className="ghost-btn h-11 w-11 rounded-2xl hover:text-red-400">
-                    <Trash2 className="w-5 h-5" />
+                  <button onClick={() => removeProblem(problem.id)} className="btn-ghost h-8 w-8 p-0 hover:text-red-600">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

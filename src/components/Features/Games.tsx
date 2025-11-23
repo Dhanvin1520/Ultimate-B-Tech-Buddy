@@ -106,44 +106,44 @@ export default function TechQuiz() {
   };
 
   return (
-    <div className="glass-panel border-white/10 p-6 text-white">
-      <div className="flex flex-col gap-2 text-center">
-        <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/50">
-          <Sparkles className="h-4 w-4 text-amber-300" />
+    <div className="swiss-card p-8 text-[var(--text-primary)]">
+      <div className="flex flex-col gap-4 text-center mb-8">
+        <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
+          <Sparkles className="h-4 w-4 text-[var(--accent-color)]" />
           Quiz Mode
         </div>
-        <h1 className="panel-title text-3xl">Tech Quiz 🎯</h1>
-        <p className="text-sm text-white/50">
+        <h1 className="heading-xl">Tech Quiz</h1>
+        <p className="text-sm font-medium text-[var(--text-secondary)]">
           Quick-fire fundamentals to keep your brain warmed up.
         </p>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/5 bg-white/5 px-5 py-4">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-6 p-6 border border-[var(--border-strong)] bg-[var(--bg-subtle)]">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-white/40">Score</p>
-          <p className="text-3xl font-semibold text-white">{points}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">Score</p>
+          <p className="text-4xl font-bold text-[var(--text-primary)]">{points}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/40">Progress</p>
-          <p className="text-3xl font-semibold text-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">Progress</p>
+          <p className="text-4xl font-bold text-[var(--text-primary)]">
             {quizOver ? totalQuestions : index + 1}
-            <span className="text-white/40"> / {totalQuestions}</span>
+            <span className="text-[var(--text-tertiary)] text-2xl"> / {totalQuestions}</span>
           </p>
         </div>
       </div>
 
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="mb-8 h-4 w-full border border-[var(--border-strong)] bg-[var(--bg-page)] p-0.5">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 transition-all duration-500"
+          className="h-full bg-[var(--accent-color)] transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {!quizOver ? (
-        <div className="mt-6 space-y-4">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Question</p>
-            <p className="mt-3 text-2xl font-semibold leading-snug text-white">
+        <div className="space-y-6">
+          <div className="p-6 border border-[var(--border-color)] bg-[var(--bg-page)] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-2">Question</p>
+            <p className="text-2xl font-bold leading-snug text-[var(--text-primary)]">
               {currentQuestion?.question}
             </p>
           </div>
@@ -162,24 +162,24 @@ export default function TechQuiz() {
           </div>
 
           {feedback === 'correct' && (
-            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">
+            <div className="p-4 border border-green-600 bg-green-50 text-center text-sm font-bold text-green-700 uppercase tracking-wide">
               Nailed it! Keep going.
             </div>
           )}
 
           {feedback === 'incorrect' && (
-            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-center text-sm font-semibold text-rose-200">
+            <div className="p-4 border border-red-600 bg-red-50 text-center text-sm font-bold text-red-700 uppercase tracking-wide">
               Missed that one — watch for the right concept!
             </div>
           )}
         </div>
       ) : (
-        <div className="mt-8 space-y-6 text-center">
-          <h2 className="panel-title text-3xl">Quiz Over!</h2>
-          <p className="text-lg text-white/70">
-            You scored <span className="text-white">{points}</span> out of {totalQuestions}.
+        <div className="mt-12 space-y-8 text-center">
+          <h2 className="heading-lg">Quiz Over!</h2>
+          <p className="text-xl font-medium text-[var(--text-secondary)]">
+            You scored <span className="font-bold text-[var(--text-primary)]">{points}</span> out of {totalQuestions}.
           </p>
-          <button onClick={resetQuiz} className="primary-btn inline-flex items-center gap-2 px-8 py-3">
+          <button onClick={resetQuiz} className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-lg">
             <RotateCcw className="h-5 w-5" />
             Play Again
           </button>

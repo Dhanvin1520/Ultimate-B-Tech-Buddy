@@ -10,7 +10,7 @@ export default function Timer() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
-  
+
   const presets: TimerPreset[] = [
     { label: 'Pomodoro', minutes: 25 },
     { label: 'Short Break', minutes: 5 },
@@ -53,36 +53,36 @@ export default function Timer() {
   };
 
   return (
-    <div className="glass-panel p-6">
-      <h2 className="panel-title text-2xl">Timer</h2>
+    <div className="swiss-card p-8 flex flex-col items-center justify-center min-h-[400px]">
+      <h2 className="heading-lg mb-8">Focus Timer</h2>
 
-      <div className="my-8 flex justify-center">
-        <div className="rounded-3xl border border-white/10 bg-black/40 px-10 py-6 font-mono text-6xl tracking-[0.3em] text-white">
+      <div className="mb-10 flex justify-center">
+        <div className="text-8xl font-bold tracking-tighter text-[var(--text-primary)] font-mono tabular-nums">
           {formatTime(timeLeft)}
         </div>
       </div>
 
-      <div className="mb-8 flex justify-center gap-4">
+      <div className="mb-10 flex justify-center gap-6">
         <button
           onClick={() => setIsRunning(!isRunning)}
-          className="primary-btn h-14 w-14 rounded-2xl"
+          className="btn-primary h-16 w-16 rounded-full flex items-center justify-center"
         >
-          {isRunning ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+          {isRunning ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
         </button>
         <button
           onClick={() => handleReset(Math.floor(timeLeft / 60))}
-          className="ghost-btn h-14 w-14 rounded-2xl"
+          className="btn-outline h-16 w-16 rounded-full flex items-center justify-center"
         >
           <RefreshCw className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 w-full max-w-md">
         {presets.map((preset) => (
           <button
             key={preset.label}
             onClick={() => handleReset(preset.minutes)}
-            className="rounded-2xl border border-white/10 bg-white/5 py-3 text-sm text-white/80 hover:border-white/40"
+            className="py-3 px-4 text-sm font-bold uppercase tracking-widest border border-[var(--border-color)] hover:bg-[var(--bg-subtle)] hover:border-[var(--text-primary)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             {preset.label}
           </button>

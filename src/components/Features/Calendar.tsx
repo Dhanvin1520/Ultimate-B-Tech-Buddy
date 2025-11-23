@@ -3,53 +3,56 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   return (
-    <div className="glass-panel p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="swiss-card p-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.4em] text-white/40">Calendar</p>
-          <h2 className="panel-title text-2xl">{format(currentDate, 'MMMM yyyy')}</h2>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">Calendar</p>
+          <h2 className="heading-xl">{format(currentDate, 'MMMM yyyy')}</h2>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}
-            className="ghost-btn"
+            className="btn-outline"
           >
             Previous
           </button>
           <button
             onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}
-            className="primary-btn"
+            className="btn-primary"
           >
             Next
           </button>
         </div>
       </div>
 
-      <div className="mb-2 grid grid-cols-7 gap-2 text-center text-xs uppercase tracking-[0.3em] text-white/30">
+      <div className="mb-4 grid grid-cols-7 gap-2 text-center text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)]">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day}>{day}</div>
+          <div key={day} className="py-2">{day}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((day) => (
-          <button
-            key={day.toISOString()}
-            className={`rounded-2xl border px-3 py-4 text-center text-sm transition-colors ${
-              format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                ? 'border-amber-400/60 bg-amber-500/10 text-white shadow-inner'
-                : 'border-white/5 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'
-            }`}
-          >
-            {format(day, 'd')}
-          </button>
-        ))}
+      <div className="grid grid-cols-7 gap-px bg-[var(--border-color)] border border-[var(--border-color)]">
+        {days.map((day) => {
+          const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+          return (
+            <div
+              key={day.toISOString()}
+              className={`h-32 p-2 bg-[var(--bg-panel)] transition-colors hover:bg-[var(--bg-subtle)] flex flex-col items-start justify-between ${isToday ? 'bg-[var(--bg-subtle)]' : ''
+                }`}
+            >
+              <span className={`text-sm font-bold ${isToday ? 'text-[var(--accent-color)]' : 'text-[var(--text-primary)]'}`}>
+                {format(day, 'd')}
+              </span>
+              {isToday && <div className="w-2 h-2 bg-[var(--accent-color)] rounded-full self-end" />}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

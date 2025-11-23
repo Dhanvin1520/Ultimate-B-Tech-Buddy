@@ -18,6 +18,7 @@ const INITIAL_MESSAGE: Message = {
 
 export default function Chatbot() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // New collapsed state
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,26 @@ export default function Chatbot() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-show collapsed header after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsCollapsed(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-close collapsed header after 2 more seconds
+  useEffect(() => {
+    if (isCollapsed && !isExpanded) {
+      const timer = setTimeout(() => {
+        setIsCollapsed(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isCollapsed, isExpanded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,105 +102,165 @@ export default function Chatbot() {
   };
 
   return (
-    <div
-      role="dialog"
-      aria-label="BTech Buddy chat"
-      aria-expanded={isExpanded}
-      className={`fixed z-50 transition-all ${isExpanded ? 'inset-0 sm:inset-auto sm:right-4 sm:bottom-4 sm:w-[28rem] sm:h-[90vh] rounded-none sm:rounded-3xl' : 'right-4 bottom-4 max-w-[30rem] sm:right-4 sm:left-auto sm:w-[28rem] sm:h-16 rounded-3xl'} border border-white/15 bg-black/70 text-white shadow-aurora backdrop-blur-2xl`}
-    >
+    <>
+      {/* Chatbot Container - Fixed position, expands in place */}
+      <div
+        role="dialog"
+        aria-label="BTech Buddy chat"
+        aria-expanded={isExpanded}
+        className={`fixed bottom-6 right-6 z-50 transition-all duration-[800ms] ease-in-out ${isExpanded
+            ? 'w-[450px] h-[650px]'
+            : isCollapsed
+              ? 'w-auto h-auto'
+              : 'w-16 h-16'
+          } bg-white rounded-xl border-2 border-gray-300 shadow-xl overflow-hidden`}
+      >
 
-      <div className={`flex h-16 w-full items-center justify-between rounded-t-3xl bg-brand-gradient px-4 ${isExpanded ? 'sm:rounded-t-3xl rounded-t-none' : 'rounded-t-3xl'}`}>
-        <button
-          onClick={() => setIsExpanded((v) => !v)}
-          aria-controls="btech-chat-body"
-          aria-expanded={isExpanded}
-          className="flex items-center gap-3 focus:outline-none"
-        >
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center neon-avatar">
-            <Bot className="text-amber-600 w-6 h-6" />
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="text-lg font-semibold">BTech Buddy AI</span>
-            <span className="text-xs text-white/70">Ask anything about tech and career</span>
-          </div>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <button onClick={() => setIsExpanded(false)} className="p-2 rounded-full hover:bg-white/5 focus:outline-none">
-            <ChevronUp className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div id="btech-chat-body" className="flex flex-col sm:h-[calc(100%-4rem)] h-[calc(100%-4rem)]">
-
-          <div className="flex-1 space-y-4 overflow-y-auto bg-black/60 p-4 pb-28 sm:pb-6" onClick={() => inputRef.current?.focus()}>
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-2 ${msg.isUser ? 'flex-row-reverse' : ''}`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.isUser ? 'bg-amber-600' : 'bg-white'}`}>
-                  {msg.isUser ? (
-                    <UserIcon className="w-5 h-5 text-white" />
-                  ) : (
-                    <Bot className="w-5 h-5 text-amber-700" />
-                  )}
-                </div>
-                <div
-                  className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl p-3 text-sm leading-relaxed ${
-                    msg.isUser
-                      ? 'bg-amber-500/30 text-white'
-                      : 'bg-white/90 text-black'
-                  }`}
-                  style={{ overflowWrap: 'anywhere' }}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="flex gap-2 items-center">
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="rounded-xl bg-white/90 px-3 py-1 text-black animate-pulse">
-                  Typing...
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form
-            onSubmit={handleSubmit}
-            className="border-t border-white/10 bg-black/80 p-3 fixed bottom-0 left-0 right-0 z-50 sm:static sm:bg-black/60 sm:border-t-0"
-            aria-label="Send message"
+        {/* Hidden state - Round button */}
+        {!isExpanded && !isCollapsed && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#0020ff] to-[#00ccff] text-white hover:scale-110 transition-transform rounded-xl"
           >
-            <div className="flex gap-2 items-end max-w-[1200px] mx-auto">
-              <textarea
-                ref={inputRef}
-                rows={2}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask me anything..."
-                className="flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
+            <Bot className="w-8 h-8" />
+          </button>
+        )}
+
+        {/* Collapsed state - Just header bar */}
+        {!isExpanded && isCollapsed && (
+          <div className="flex items-center justify-between bg-gradient-to-r from-[#0020ff] to-[#00ccff] px-6 py-4 rounded-xl min-w-[280px] cursor-pointer" onClick={() => setIsExpanded(true)}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                <Bot className="text-[var(--accent-color)] w-6 h-6" />
+              </div>
+              <span className="text-white font-bold text-lg">BTech Buddy AI</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCollapsed(false);
+                setIsExpanded(false);
+              }}
+              className="p-2 hover:bg-white/20 transition-colors rounded-lg text-white ml-2"
+            >
+              <ChevronUp className="w-5 h-5 rotate-180" />
+            </button>
+          </div>
+        )}
+
+        {/* Fully Expanded */}
+        {isExpanded && (
+          <div className="flex flex-col h-full w-full">
+            {/* Header */}
+            <div className="flex h-16 w-full items-center justify-between border-b-2 border-gray-200 bg-gradient-to-r from-[#0020ff] to-[#00ccff] px-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <Bot className="text-[var(--accent-color)] w-6 h-6" />
+                </div>
+                <div className="flex flex-col text-left text-white">
+                  <span className="text-lg font-bold leading-none">BTech Buddy AI</span>
+                  <span className="text-[10px] font-mono uppercase tracking-wide opacity-90">Powered by Gemini</span>
+                </div>
+              </div>
+
               <button
-                type="submit"
-                disabled={isLoading || !message.trim()}
-                className="primary-btn flex items-center justify-center p-3"
-                aria-disabled={isLoading || !message.trim()}
+                onClick={() => {
+                  setIsExpanded(false);
+                  setIsCollapsed(false);
+                }}
+                className="p-2 hover:bg-white/20 transition-colors rounded-lg text-white"
               >
-                <Send className="w-5 h-5" />
+                <ChevronUp className="w-5 h-5 rotate-180" />
               </button>
             </div>
-          </form>
-        </div>
-      )}
-    </div>
+
+            {/* Chat Body with proper scrolling - DARK MODE */}
+            <div className="flex-1 overflow-hidden bg-gray-900 flex flex-col min-h-0">
+              <div
+                className="flex-1 overflow-y-auto p-4 space-y-4"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#4b5563 #1f2937'
+                }}
+                onClick={() => inputRef.current?.focus()}
+              >
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex items-start gap-3 ${msg.isUser ? 'flex-row-reverse' : ''}`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${msg.isUser
+                      ? 'bg-gradient-to-br from-[#0020ff] to-[#00ccff] text-white'
+                      : 'bg-gray-800 border-2 border-gray-700 text-[var(--accent-color)]'
+                      }`}>
+                      {msg.isUser ? (
+                        <UserIcon className="w-5 h-5" />
+                      ) : (
+                        <Bot className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div
+                      className={`max-w-[75%] whitespace-pre-wrap break-words px-4 py-3 text-sm font-medium leading-relaxed rounded-lg ${msg.isUser
+                        ? 'bg-gradient-to-br from-[#0020ff] to-[#00ccff] text-white'
+                        : 'bg-gray-800 text-gray-100 border border-gray-700'
+                        }`}
+                      style={{ overflowWrap: 'anywhere' }}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+
+                {isLoading && (
+                  <div className="flex gap-3 items-center">
+                    <div className="w-9 h-9 bg-gray-800 border-2 border-gray-700 rounded-lg flex items-center justify-center">
+                      <Bot className="w-5 h-5 text-[var(--accent-color)] animate-pulse" />
+                    </div>
+                    <div className="px-4 py-2 border border-gray-700 bg-gray-800 text-gray-300 text-xs font-bold uppercase tracking-wide animate-pulse rounded-lg">
+                      Thinking...
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Form - Fixed at bottom - DARK MODE */}
+              <form
+                onSubmit={handleSubmit}
+                className="border-t-2 border-gray-800 bg-gray-950 p-4 flex-shrink-0"
+                aria-label="Send message"
+              >
+                <div className="flex gap-3 items-end">
+                  <textarea
+                    ref={inputRef}
+                    rows={1}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                    placeholder="Type your message..."
+                    className="flex-1 resize-none border-2 border-gray-700 rounded-lg bg-gray-800 px-4 py-3 text-gray-100 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 placeholder:text-gray-500 min-h-[44px] max-h-32 transition-all"
+                    style={{ lineHeight: '1.5' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !message.trim()}
+                    className="h-[44px] w-[44px] flex items-center justify-center bg-gradient-to-br from-[#0020ff] to-[#00ccff] text-white rounded-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-transform flex-shrink-0"
+                    aria-disabled={isLoading || !message.trim()}
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

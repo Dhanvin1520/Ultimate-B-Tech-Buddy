@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
-  }
-}
-import { GraduationCap, LogIn, User } from 'lucide-react';
+import { LogIn, User } from 'lucide-react';
 import api from '../lib/api';
 
 interface LoginFormProps {
@@ -59,6 +51,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
         await api.post('/auth/register', { username: uname, email, password });
         const loginRes = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', loginRes.data.token);
+        localStorage.removeItem('guest');
         setIsAuthenticated(true);
       } catch (e: any) {
         setServerError('Could not sign up. Try a different email.');
@@ -67,6 +60,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
       try {
         const loginRes = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', loginRes.data.token);
+        localStorage.removeItem('guest');
         setIsAuthenticated(true);
       } catch (e: any) {
         setServerError('Incorrect email or password');
@@ -75,87 +69,150 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-slate-900/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-800 text-white">
-      <div className="flex items-center justify-center mb-8">
-        <GraduationCap className="w-12 h-12 text-blue-500" />
-        <h1 className="text-3xl font-bold ml-3 text-white">
-          BTech Buddy
-        </h1>
-      </div>
+    <div className="w-full max-w-md relative animate-slide-up">
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {!isGuest && (
-          <>
-            {isSignup && (
-              <div>
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
-                />
+      <div className="bg-black border-2 border-gray-600 rounded-lg shadow-[0_0_50px_rgba(0,32,255,0.15)] overflow-hidden relative">
+
+ 
+        <div className="bg-[var(--bg-panel)] p-3 flex items-center justify-between border-b-2 border-gray-600">
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-green-500/80" />
+          </div>
+          <div className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
+            user@btech-buddy:~/auth
+          </div>
+          <div className="w-10" /> 
+        </div>
+
+
+        <div className="p-8 relative">
+
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
+
+
+          <div className="relative z-10 flex flex-col items-center justify-center mb-8">
+            <div className="w-16 h-16 bg-black border-2 border-[var(--accent-color)] text-[var(--accent-color)] flex items-center justify-center mb-4 rounded-lg shadow-[0_0_15px_rgba(0,32,255,0.3)]">
+              <User className="w-8 h-8" />
+            </div>
+            <h1 className="heading-lg text-center heading-gamer text-3xl mb-2">SYSTEM ACCESS</h1>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <p className="text-[var(--text-secondary)] font-mono text-xs uppercase tracking-widest">
+                Secure Connection Established
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+            {!isGuest && (
+              <>
+                {isSignup && (
+                  <div className="group">
+                    <label className="text-[10px] font-mono font-bold text-[var(--text-tertiary)] uppercase mb-1 block group-focus-within:text-[var(--accent-color)] transition-colors">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter username..."
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full bg-[var(--bg-subtle)] border-2 border-gray-600 text-[var(--text-primary)] px-4 py-3 text-sm font-mono focus:outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-all placeholder:text-[var(--text-tertiary)] rounded-md"
+                    />
+                  </div>
+                )}
+                <div className="group">
+                  <label className="text-[10px] font-mono font-bold text-[var(--text-tertiary)] uppercase mb-1 block group-focus-within:text-[var(--accent-color)] transition-colors">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[var(--bg-subtle)] border-2 border-gray-600 text-[var(--text-primary)] px-4 py-3 text-sm font-mono focus:outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-all placeholder:text-[var(--text-tertiary)] rounded-md"
+                  />
+                  {errors.email && <p className="text-xs font-bold text-red-500 mt-1 font-mono">! {errors.email}</p>}
+                </div>
+                <div className="group">
+                  <label className="text-[10px] font-mono font-bold text-[var(--text-tertiary)] uppercase mb-1 block group-focus-within:text-[var(--accent-color)] transition-colors">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[var(--bg-subtle)] border-2 border-gray-600 text-[var(--text-primary)] px-4 py-3 text-sm font-mono focus:outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-all placeholder:text-[var(--text-tertiary)] rounded-md"
+                  />
+                  {errors.password && <p className="text-xs font-bold text-red-500 mt-1 font-mono">! {errors.password}</p>}
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              className="w-full btn-primary py-3 font-mono uppercase tracking-wider flex items-center justify-center gap-2 group overflow-hidden relative"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {isGuest ? <User className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+                {isGuest ? 'Initialize Guest Mode' : isSignup ? 'Register User' : 'Authenticate'}
+              </span>
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            </button>
+
+            {serverError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-500 text-xs font-mono font-bold text-center">
+                [ERROR]: {serverError}
               </div>
             )}
-            <div>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
-              />
-              {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+
+            <div className="flex items-center gap-4 my-6">
+              <div className="h-px bg-[var(--border-color)] flex-1" />
+              <span className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-widest font-mono">OPTIONS</span>
+              <div className="h-px bg-[var(--border-color)] flex-1" />
             </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-white placeholder-slate-400"
-              />
-              {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
-            </div>
-          </>
-        )}
 
-        <button
-          type="submit"
-          className="w-full py-3 px-4 bg-slate-900 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
-        >
-          {isGuest ? <User className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
-          {isGuest ? 'Continue as Guest' : isSignup ? 'Sign up' : 'Login'}
-        </button>
+            {!isGuest && (
+              <button
+                type="button"
+                onClick={() => setIsGuest(true)}
+                className="w-full py-3 text-xs font-mono font-bold text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10 uppercase tracking-wider border border-yellow-500/30 hover:border-yellow-500 transition-all rounded-md mb-4"
+              >
+                {'>'} Bypass Authentication (Guest Mode)
+              </button>
+            )}
 
-        {serverError && (
-          <div className="text-center text-red-500 text-sm">{serverError}</div>
-        )}
+            {!isGuest && (
+              <div className="text-center mt-4 p-3 bg-[var(--bg-subtle)] rounded-md border border-[var(--border-color)]">
+                <button
+                  type="button"
+                  onClick={() => setIsSignup(!isSignup)}
+                  className="text-xs font-mono font-bold text-[var(--accent-color)] hover:text-white transition-colors uppercase tracking-wide"
+                >
+                  {isSignup ? '<< Return to Login' : '>> Initialize New User Registration'}
+                </button>
+              </div>
+            )}
 
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsGuest(!isGuest);
-              setErrors({ email: '', password: '' });
-            }}
-            className="text-slate-300 hover:text-white text-sm"
-          >
-            {isGuest ? 'Have an account? Login' : 'Continue as Guest'}
-          </button>
+            {isGuest && (
+              <button
+                type="button"
+                onClick={() => setIsGuest(false)}
+                className="w-full py-3 text-xs font-mono font-bold text-[var(--accent-color)] hover:text-white hover:bg-[var(--accent-color)]/10 uppercase tracking-wider border border-[var(--accent-color)]/30 hover:border-[var(--accent-color)] transition-all rounded-md mt-2"
+              >
+                {'<'} Return to Login Sequence
+              </button>
+            )}
+          </form>
         </div>
-        {!isGuest && (
-          <div className="text-center mt-2">
-            <button
-              type="button"
-              onClick={() => setIsSignup((v) => !v)}
-              className="text-slate-300 hover:text-white text-sm"
-            >
-              {isSignup ? 'Already have an account? Login' : "Don't have an account? Sign up"}
-            </button>
-          </div>
-        )}
-      </form>
+
+        <div className="bg-[var(--bg-panel)] p-2 border-t border-[var(--border-color)] flex justify-between items-center text-[10px] font-mono text-[var(--text-tertiary)]">
+          <span>STATUS: ONLINE</span>
+          <span>V2.0.4</span>
+        </div>
+      </div>
     </div>
   );
 }
