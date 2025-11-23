@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-// Use environment variable for API URL or fallback to development URL
+
 const API_URL = import.meta.env.VITE_API_URL || 'https://ultimate-b-tech-buddy.onrender.com/api';
 
 const api = axios.create({
@@ -11,7 +11,7 @@ const api = axios.create({
   withCredentials: true
 })
 
-// Add a request interceptor to add auth token to requests
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -22,14 +22,14 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error)
 })
 
-// Add a response interceptor to handle errors
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access (e.g., redirect to login)
+
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      window.dispatchEvent(new Event('auth:unauthorized'));
     }
     return Promise.reject(error)
   }
