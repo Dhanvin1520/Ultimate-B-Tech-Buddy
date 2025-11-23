@@ -614,7 +614,7 @@ export default function VideoChat({ isActive = true, onExpand }: VideoChatProps)
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-8 text-[var(--text-primary)]">
+    <div className="flex min-h-[calc(100vh-6rem)] flex-col gap-4 text-[var(--text-primary)]">
       <div className="swiss-card p-8 flex flex-wrap items-center justify-between gap-6">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--text-secondary)] tracking-widest mb-2">Live rooms</p>
@@ -755,6 +755,18 @@ export default function VideoChat({ isActive = true, onExpand }: VideoChatProps)
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
+              {!socketConnected && (
+                <div className="w-full max-w-sm border border-green-500/40 bg-black text-green-300 font-mono px-5 py-4 text-left">
+                  <p className="text-[10px] uppercase tracking-[0.3em] mb-2">socket://nst-video</p>
+                  <p className="text-sm font-bold tracking-wide">Linking media relays...</p>
+                  <p className="text-[11px] text-green-200">
+                    {joinedRoom ? 'Re-establishing peer mesh and ICE candidates.' : 'Booting SFU nodes and dialing peers.'}
+                  </p>
+                  <div className="mt-4 h-2 w-full border border-green-500/40 bg-green-500/10 overflow-hidden">
+                    <div className="h-full w-1/2 bg-green-400 animate-pulse" />
+                  </div>
+                </div>
+              )}
               <div className="w-20 h-20 bg-white border border-[var(--border-strong)] flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <Users className="w-10 h-10 text-[var(--text-primary)]" />
               </div>

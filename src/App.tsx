@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Wifi } from 'lucide-react';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Layout/Dashboard';
@@ -6,6 +6,7 @@ import Swiss3DBackground from './components/Swiss3DBackground';
 import api from './lib/api';
 
 function App() {
+  const [forceAuthScreen, setForceAuthScreen] = useState(() => localStorage.getItem('forceAuthScreen') === 'true');
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem('token');
     const guest = localStorage.getItem('guest');
@@ -14,6 +15,13 @@ function App() {
     return Boolean(token) || guest === 'true';
   });
   const [isServerWakingUp, setIsServerWakingUp] = useState(false);
+
+  const activateGuestMode = useCallback(() => {
+    localStorage.setItem('guest', 'true');
+    localStorage.removeItem('forceAuthScreen');
+    setForceAuthScreen(false);
+    setIsAuthenticated(true);
+  }, []);
 
   useEffect(() => {
 
@@ -50,6 +58,12 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated && !forceAuthScreen) {
+      activateGuestMode();
+    }
+  }, [activateGuestMode, forceAuthScreen, isAuthenticated]);
+
   const handleSetIsAuthenticated = (value: boolean) => {
     setIsAuthenticated(value);
     if (!value) {
@@ -61,7 +75,13 @@ function App() {
       localStorage.removeItem('guest-tasks');
       localStorage.removeItem('guest-notes');
       localStorage.removeItem('my-notes');
+      localStorage.setItem('forceAuthScreen', 'true');
+      setForceAuthScreen(true);
 
+    }
+    if (value) {
+      localStorage.removeItem('forceAuthScreen');
+      setForceAuthScreen(false);
     }
   };
 
@@ -80,7 +100,7 @@ function App() {
         </div>
       )}
 
-      {isAuthenticated ? (
+      {isAuthenticated && !forceAuthScreen ? (
         <Dashboard setIsAuthenticated={handleSetIsAuthenticated} />
       ) : (
         <div className="flex items-center justify-center min-h-screen p-4">

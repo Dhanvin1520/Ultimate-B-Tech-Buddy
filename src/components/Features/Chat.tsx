@@ -318,6 +318,17 @@ export default function Chat() {
 
   const activeRoom = useMemo(() => rooms.find((room) => room.id === (joinedRoom || selectedRoom)), [rooms, selectedRoom, joinedRoom]);
 
+  const TerminalBanner = ({ title, subtitle }: { title: string; subtitle: string }) => (
+    <div className="border-b border-green-500/40 bg-black text-green-300 font-mono px-6 py-3">
+      <p className="text-[10px] uppercase tracking-[0.3em] mb-1">socket://nst-chat</p>
+      <p className="text-sm font-bold tracking-wide">{title}</p>
+      <p className="text-[11px] text-green-200">{subtitle}</p>
+      <div className="mt-3 h-1.5 w-full border border-green-500/40 bg-green-500/10 overflow-hidden">
+        <div className="h-full w-1/2 bg-green-400 animate-pulse" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="swiss-card flex flex-col flex-1 p-0 overflow-hidden h-[calc(100vh-7rem)]">
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 border-b border-[var(--border-color)] bg-[var(--bg-panel)]">
@@ -329,6 +340,13 @@ export default function Chat() {
           {connected ? 'Live' : 'Offline'}
         </div>
       </div>
+
+      {!connected && (
+        <TerminalBanner
+          title="Establishing secure channel..."
+          subtitle="Waiting for socket handshake, micro-service ping in progress."
+        />
+      )}
 
       <div className="flex flex-col lg:grid lg:grid-cols-[300px_1fr] flex-1 min-h-0 bg-[var(--bg-page)]">
         <button

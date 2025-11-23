@@ -25,6 +25,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
     setServerError('');
     if (isGuest) {
       localStorage.setItem('guest', 'true');
+      localStorage.removeItem('forceAuthScreen');
       setIsAuthenticated(true);
       return;
     }
@@ -68,6 +69,12 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
     }
   };
 
+  const handleMacClose = () => {
+    localStorage.setItem('guest', 'true');
+    localStorage.removeItem('forceAuthScreen');
+    setIsAuthenticated(true);
+  };
+
   return (
     <div className="w-full max-w-md relative animate-slide-up">
 
@@ -76,7 +83,12 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
  
         <div className="bg-[var(--bg-panel)] p-3 flex items-center justify-between border-b-2 border-gray-600">
           <div className="flex gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <button
+              type="button"
+              onClick={handleMacClose}
+              aria-label="Close login"
+              className="w-3 h-3 rounded-full bg-red-500/80 focus:outline-none focus:ring-1 focus:ring-red-300"
+            />
             <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
             <div className="w-3 h-3 rounded-full bg-green-500/80" />
           </div>

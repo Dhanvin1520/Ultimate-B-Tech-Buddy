@@ -342,6 +342,7 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 								</p>
 								<button
 									onClick={() => {
+										localStorage.setItem('forceAuthScreen', 'true');
 										localStorage.removeItem('guest');
 										window.location.reload();
 									}}
@@ -350,7 +351,7 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 									<div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
 									<div className="relative flex items-center gap-3">
 										<div className="flex flex-col items-end">
-											<span className="text-white font-bold font-mono uppercase tracking-wide text-sm">Login </span>
+											<span className="text-white font-bold font-mono uppercase tracking-wide text-sm">Please Login </span>
 											<span className="text-[10px] text-red-500 font-mono uppercase tracking-widest">&gt;&gt; Access Full Features &lt;&lt;</span>
 										</div>
 										<Terminal className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />
