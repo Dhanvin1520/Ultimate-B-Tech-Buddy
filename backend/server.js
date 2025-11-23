@@ -16,8 +16,21 @@ const leetcodeRoutes = require('./routes/leetcode');
 
 const app = express();
 
+const parseEnvOrigins = (value) =>
+  value
+    ?.split(',')
+    .map((origin) => origin?.trim())
+    .filter(Boolean) || [];
+
+const vercelEnvOrigins = [
+  process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+].filter(Boolean);
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  ...vercelEnvOrigins,
+  ...parseEnvOrigins(process.env.CORS_EXTRA_ORIGINS),
   'https://ultimate-b-tech-buddy.vercel.app',
   'https://ultimate-b-tech-buddy-anv1.vercel.app',
   'https://ultimate-b-tech-buddy-xdn9-d7uitm5fb.vercel.app',
@@ -28,7 +41,7 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:5173',
   'http://127.0.0.1:5173'
-];
+].filter(Boolean);
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
