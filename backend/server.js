@@ -24,6 +24,7 @@ const allowedOrigins = [
   /\.vercel\.app$/,
   'https://ultimate-b-tech-buddy.netlify.app',
   'http://localhost:3000',
+  'http://localhost:3001',
   'http://localhost:5173',
   'http://127.0.0.1:5173'
 ];
@@ -61,7 +62,7 @@ const formatMessage = (doc, extra = {}) => ({
   ...extra
 });
 
-const fallbackRoomCache = new Map(); // roomId -> Message[]
+const fallbackRoomCache = new Map();
 const pendingPersistenceQueue = [];
 const isMongoReady = () => mongoose.connection?.readyState === 1;
 
@@ -116,11 +117,11 @@ const flushPendingPersistence = async () => {
 };
 
 
-const videoRooms = new Map(); // roomId -> Set<socketId>
-const socketVideoRooms = new Map(); // socketId -> Set<roomId>
-const videoPeerProfiles = new Map(); // socketId -> { userName }
+const videoRooms = new Map();
+const socketVideoRooms = new Map();
+const videoPeerProfiles = new Map();
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
     return callback(null, true);
@@ -129,7 +130,7 @@ app.use(cors({
 }));
 
 app.options('*', cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
     return callback(null, true);
@@ -167,14 +168,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// Create HTTP server and attach socket.io for community chat (room based)
 const server = http.createServer(app);
 
-// Allow the same origins as express CORS
 const io = new Server(server, {
   cors: {
-    origin: function(origin, callback) {
-      // allow undefined origin (e.g., mobile apps or curl)
+    origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
       return callback(null, true);
@@ -214,27 +212,23 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', async ({ roomId, user }) => {
     const normalizedRoomId = normalizeRoomId(roomId);
     socket.join(normalizedRoomId);
-    console.log(`${user?.name || socket.id} joined room ${normalizedRoomId}`);
+    console.log(`[DEBUG] ${user?.name || socket.id} joined room: ${roomId} -> normalized: ${normalizedRoomId}`);
+
     try {
-      const since = new Date(Date.now() - THIRTY_DAYS_MS);
-      const historyDocs = await ChatMessage.find({
-        roomId: normalizedRoomId,
-        createdAt: { $gte: since }
-      }).sort({ createdAt: 1 }).lean();
-      const persistedHistory = historyDocs.map(formatMessage);
-      const fallbackHistory = getFallbackHistory(normalizedRoomId);
-      const combined = [...persistedHistory, ...fallbackHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-      socket.emit('roomHistory', combined);
-      socket.to(normalizedRoomId).emit('systemMessage', { text: `${user?.name || 'Someone'} joined the room`, timestamp: new Date() });
-    } catch (error) {
-      console.error('Failed to fetch chat history', error);
-      const fallbackHistory = getFallbackHistory(normalizedRoomId);
-      if (fallbackHistory.length) {
-        socket.emit('roomHistory', fallbackHistory);
-      } else {
-        socket.emit('systemMessage', { text: 'Could not load older messages. Please try again.', timestamp: new Date() });
-      }
+      const history = await ChatMessage.find({ roomId: normalizedRoomId })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+
+      console.log(`[DEBUG] Fetched ${history.length} messages for room ${normalizedRoomId}`);
+      const formattedHistory = history.reverse().map(doc => formatMessage(doc));
+      socket.emit('roomHistory', formattedHistory);
+    } catch (err) {
+      console.error('[DEBUG] Failed to fetch chat history', err);
+      socket.emit('roomHistory', []);
     }
+
+    socket.to(normalizedRoomId).emit('systemMessage', { text: `${user?.name || 'Someone'} joined the room`, timestamp: new Date() });
   });
 
   socket.on('leaveRoom', ({ roomId, user }) => {
@@ -245,6 +239,7 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', async ({ roomId, message }, callback) => {
     const normalizedRoomId = normalizeRoomId(roomId);
+    console.log(`[DEBUG] sendMessage received for room ${normalizedRoomId}:`, message);
     const baseMessage = {
       id: message?.clientMessageId || `${Date.now()}-${Math.random()}`,
       text: message?.text,
@@ -258,6 +253,7 @@ io.on('connection', (socket) => {
         userName: message.userName || 'Anonymous',
         text: message.text
       });
+      console.log(`[DEBUG] Message saved to DB: ${saved._id}`);
       const payload = formatMessage(saved, {
         clientMessageId: message?.clientMessageId,
       });

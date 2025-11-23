@@ -22,7 +22,6 @@ const ChatMessageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Automatically index createdAt for TTL querying convenience
 ChatMessageSchema.index({ roomId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('ChatMessage', ChatMessageSchema);
