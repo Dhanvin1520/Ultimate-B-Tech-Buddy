@@ -311,7 +311,7 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 			{/* Welcome Section - Top Left */}
 			<section className="bg-[var(--bg-page)] pt-8 pb-6 px-6 border-b border-[var(--border-color)]">
 				<div className="max-w-7xl mx-auto">
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 						<div className="flex items-center gap-6">
 							{/* Terminal Icon */}
 							<div className="relative group">
@@ -336,7 +336,7 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 
 						{/* Login Button for Guests */}
 						{isGuest && (
-							<div className="flex flex-col items-end gap-2">
+							<div className="flex flex-col gap-2 w-full text-center sm:text-right sm:items-end sm:self-stretch lg:w-auto">
 								<p className="text-[10px] font-mono font-bold text-red-500 uppercase tracking-widest animate-pulse">
 									⚠ Restricted Access Mode
 								</p>
@@ -346,15 +346,15 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 										localStorage.removeItem('guest');
 										window.location.reload();
 									}}
-									className="relative group px-8 py-4 bg-black border-2 border-red-500 rounded-xl overflow-hidden hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,0,0,0.3)]"
+									className="relative group px-6 py-4 bg-black border-2 border-red-500 rounded-xl overflow-hidden hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,0,0,0.3)] w-full sm:w-auto"
 								>
 									<div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity"></div>
-									<div className="relative flex items-center gap-3">
-										<div className="flex flex-col items-end">
-											<span className="text-white font-bold font-mono uppercase tracking-wide text-sm">Please Login </span>
+									<div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+										<div className="flex flex-col sm:items-end">
+											<span className="text-white font-bold font-mono uppercase tracking-wide text-sm">Please Login</span>
 											<span className="text-[10px] text-red-500 font-mono uppercase tracking-widest">&gt;&gt; Access Full Features &lt;&lt;</span>
 										</div>
-										<Terminal className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />
+										<Terminal className="w-6 h-6 text-white sm:ml-3 self-center group-hover:rotate-12 transition-transform" />
 									</div>
 								</button>
 							</div>
