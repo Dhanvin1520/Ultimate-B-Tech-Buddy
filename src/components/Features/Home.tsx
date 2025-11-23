@@ -63,6 +63,9 @@ const SAMPLE_TASKS: TodoItem[] = [
 const TASK_PREVIEW_LIMIT = 4;
 const GUEST_LEET_PROGRESS = { easy: 45, medium: 32, hard: 8 } as const;
 const HOME_SPOTIFY_COVER = 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=900&q=80';
+const FULL_LEET_COUNTS = { easy: 749, medium: 1563, hard: 688 } as const;
+const FULL_LEET_TOTAL = FULL_LEET_COUNTS.easy + FULL_LEET_COUNTS.medium + FULL_LEET_COUNTS.hard;
+const createEmptyDifficultyCounters = () => ({ easy: 0, medium: 0, hard: 0 });
 
 const normalizeTasks = (tasks: any[]): TodoItem[] =>
 	tasks
@@ -94,8 +97,12 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 
 	// LeetCode Progress - Dummy data for guests, real for logged-in users
 	const [leetSolved, setLeetSolved] = useState(() =>
-		isGuest ? { ...GUEST_LEET_PROGRESS } : { easy: 0, medium: 0, hard: 0 }
+		isGuest ? { ...GUEST_LEET_PROGRESS } : createEmptyDifficultyCounters()
 	);
+	const [leetTotals, setLeetTotals] = useState<Record<'easy' | 'medium' | 'hard', number>>(() =>
+		isGuest ? { ...FULL_LEET_COUNTS } : createEmptyDifficultyCounters()
+	);
+	const [leetTotalCount, setLeetTotalCount] = useState(() => (isGuest ? FULL_LEET_TOTAL : 0));
 
 	// Fetch real user data and personalized widgets for logged-in users
 	useEffect(() => {
@@ -113,6 +120,8 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 			}
 
 			setLeetSolved({ ...GUEST_LEET_PROGRESS });
+			setLeetTotals({ ...FULL_LEET_COUNTS });
+			setLeetTotalCount(FULL_LEET_TOTAL);
 			setIsSummaryLoading(false);
 		};
 
@@ -123,12 +132,43 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 
 		let isActive = true;
 
+		const normalizeDifficulty = (value?: string): 'easy' | 'medium' | 'hard' => {
+			const normalized = String(value || '').toLowerCase();
+			if (normalized === 'medium' || normalized === 'hard') return normalized;
+			return 'easy';
+		};
+
+		const fetchLeetSummary = async () => {
+			try {
+				const res = await api.get('/leetcode');
+				if (!isActive) return;
+				const list = Array.isArray(res.data) ? res.data : [];
+				const totals = createEmptyDifficultyCounters();
+				const solved = createEmptyDifficultyCounters();
+				list.forEach((problem) => {
+					const difficulty = normalizeDifficulty(problem?.difficulty);
+					totals[difficulty] += 1;
+					if (String(problem?.status || '').toLowerCase() === 'solved') {
+						solved[difficulty] += 1;
+					}
+				});
+				setLeetTotals(totals);
+				setLeetSolved(solved);
+				setLeetTotalCount(list.length);
+			} catch (error) {
+				if (!isActive) return;
+				console.error('Failed to load LeetCode summary:', error);
+				setLeetTotals(createEmptyDifficultyCounters());
+				setLeetSolved(createEmptyDifficultyCounters());
+				setLeetTotalCount(0);
+			}
+		};
+
 		const fetchData = async () => {
 			setIsSummaryLoading(true);
 			try {
-				const [tasksRes, lcRes, userRes] = await Promise.allSettled([
+				const [tasksRes, userRes] = await Promise.allSettled([
 					api.get('/tasks'),
-					api.get('/leetcode'),
 					api.get('/auth/me'),
 				]);
 
@@ -140,21 +180,6 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 					setTodoItems([]);
 				}
 
-				if (lcRes.status === 'fulfilled' && Array.isArray(lcRes.value.data)) {
-					const solvedCounts = lcRes.value.data.reduce(
-						(acc, problem) => {
-							if (problem?.status !== 'solved') return acc;
-							const key = String(problem?.difficulty || '').toLowerCase();
-							if (key === 'easy') acc.easy += 1;
-							else if (key === 'medium') acc.medium += 1;
-							else if (key === 'hard') acc.hard += 1;
-							return acc;
-						},
-						{ easy: 0, medium: 0, hard: 0 }
-					);
-					setLeetSolved(solvedCounts);
-				}
-
 				if (userRes.status === 'fulfilled' && userRes.value.data) {
 					const profile = userRes.value.data;
 					if (profile.username) {
@@ -163,6 +188,8 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 						setUserName(profile.name);
 					}
 				}
+
+				await fetchLeetSummary();
 			} catch (err) {
 				console.error('Failed to load personalized widgets:', err);
 			} finally {
@@ -208,6 +235,20 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 	const taskPreview = todoItems.slice(0, TASK_PREVIEW_LIMIT);
 	const isTaskEmpty = !isSummaryLoading && taskPreview.length === 0;
 	const totalSolved = leetSolved.easy + leetSolved.medium + leetSolved.hard;
+	const difficultyTotals = {
+		easy: isGuest ? FULL_LEET_COUNTS.easy : leetTotals.easy,
+		medium: isGuest ? FULL_LEET_COUNTS.medium : leetTotals.medium,
+		hard: isGuest ? FULL_LEET_COUNTS.hard : leetTotals.hard,
+	};
+	const totalProblems = isGuest ? FULL_LEET_TOTAL : leetTotalCount;
+	const computeProgress = (solved: number, total: number) => {
+		if (!total) return 0;
+		return Math.min(100, Math.max(0, (solved / total) * 100));
+	};
+	const easyProgress = computeProgress(leetSolved.easy, difficultyTotals.easy);
+	const mediumProgress = computeProgress(leetSolved.medium, difficultyTotals.medium);
+	const hardProgress = computeProgress(leetSolved.hard, difficultyTotals.hard);
+	const totalProgress = computeProgress(totalSolved, totalProblems);
 	const canSubmitTask = newTaskText.trim().length > 0 && !isCreatingTask;
 
 	const handleQuickTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -563,12 +604,12 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-bold text-green-600">Easy</span>
-									<span className="text-sm font-mono font-bold">{leetSolved.easy}/749</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.easy}/{difficultyTotals.easy}</span>
 								</div>
 								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
 									<div
 										className="h-full bg-green-500 transition-all duration-500"
-										style={{ width: `${(leetSolved.easy / 749) * 100}%` }}
+										style={{ width: `${easyProgress}%` }}
 									></div>
 								</div>
 							</div>
@@ -577,12 +618,12 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-bold text-yellow-600">Medium</span>
-									<span className="text-sm font-mono font-bold">{leetSolved.medium}/1563</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.medium}/{difficultyTotals.medium}</span>
 								</div>
 								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
 									<div
 										className="h-full bg-yellow-500 transition-all duration-500"
-										style={{ width: `${(leetSolved.medium / 1563) * 100}%` }}
+										style={{ width: `${mediumProgress}%` }}
 									></div>
 								</div>
 							</div>
@@ -591,12 +632,12 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-bold text-red-600">Hard</span>
-									<span className="text-sm font-mono font-bold">{leetSolved.hard}/688</span>
+									<span className="text-sm font-mono font-bold">{leetSolved.hard}/{difficultyTotals.hard}</span>
 								</div>
 								<div className="h-2 bg-gray-200 rounded-full overflow-hidden">
 									<div
 										className="h-full bg-red-500 transition-all duration-500"
-										style={{ width: `${(leetSolved.hard / 688) * 100}%` }}
+										style={{ width: `${hardProgress}%` }}
 									></div>
 								</div>
 							</div>
@@ -607,13 +648,13 @@ export const Home = ({ setActiveSection }: HomeProps) => {
 							<div className="flex items-center justify-between mb-3">
 								<span className="font-bold text-[var(--text-primary)]">Total Solved</span>
 								<span className="text-2xl font-mono font-bold heading-gamer">
-									{totalSolved}/3000
+									{totalSolved}/{totalProblems}
 								</span>
 							</div>
 							<div className="h-3 bg-gray-200 rounded-full overflow-hidden">
 								<div
 									className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-500"
-									style={{ width: `${(totalSolved / 3000) * 100}%` }}
+									style={{ width: `${totalProgress}%` }}
 								></div>
 							</div>
 						</div>

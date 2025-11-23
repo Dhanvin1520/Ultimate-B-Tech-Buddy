@@ -30,6 +30,16 @@ const allowedOrigins = [
   'http://127.0.0.1:5173'
 ];
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  return allowedOrigins.some((allowed) => {
+    if (allowed instanceof RegExp) {
+      return allowed.test(origin);
+    }
+    return allowed === origin;
+  });
+};
+
 const PREDEFINED_ROOMS = [
   { id: 'nst-commons', name: 'NST Commons', description: 'General chatter for every NST student.' },
   { id: 'nst-placements', name: 'NST Placements', description: 'Internship/placement updates, referrals, and tips.' }
@@ -123,18 +133,16 @@ const socketVideoRooms = new Map();
 const videoPeerProfiles = new Map();
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
-    return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true
 }));
 
 app.options('*', cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
-    return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true
 }));
@@ -174,9 +182,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) return callback(new Error('Not allowed by CORS'), false);
-      return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
   },

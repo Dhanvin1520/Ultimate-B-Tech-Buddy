@@ -77,6 +77,50 @@ export default function LeetCode() {
 
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const normalizeProblems = (raw: any[]): Problem[] => {
+    const allowedDifficulty = new Set(['easy', 'medium', 'hard']);
+    const allowedStatus = new Set(['solved', 'attempted', 'todo']);
+
+    return raw
+      .filter(Boolean)
+      .map((problem: any, index: number) => {
+        const difficulty = String(problem?.difficulty || 'easy').toLowerCase();
+        const status = String(problem?.status || 'todo').toLowerCase();
+        return {
+          id: String(problem?._id || problem?.id || `problem-${index}`),
+          title: problem?.title || 'Untitled Problem',
+          difficulty: (allowedDifficulty.has(difficulty) ? difficulty : 'easy') as Problem['difficulty'],
+          url: problem?.url || 'https://leetcode.com',
+          status: (allowedStatus.has(status) ? status : 'todo') as Problem['status']
+        };
+      });
+  };
+
+  const seedDefaultProblems = async () => {
+    try {
+      await api.post('/leetcode/seed', {
+        problems: CURATED.map((problem) => ({
+          title: problem.title,
+          difficulty: problem.difficulty,
+          url: problem.url,
+          status: 'todo'
+        }))
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to seed default LeetCode problems:', error);
+      return false;
+    }
+  };
+
+  const toProblemId = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      || crypto.randomUUID();
+
   useEffect(() => {
     const seedCurated = () => setProblems(CURATED.map((p) => ({ ...p })));
 
@@ -94,28 +138,38 @@ export default function LeetCode() {
       } else {
         seedCurated();
       }
-    } else {
-      const load = async () => {
-        try {
-          const res = await api.get('/leetcode');
-          const list: Problem[] = Array.isArray(res.data) ? res.data.map((p: any) => ({ id: p._id, title: p.title, difficulty: p.difficulty, url: p.url, status: p.status })) : [];
-          if (list.length) {
-            setProblems(list);
-          } else {
-            seedCurated();
-          }
-        } catch {
-          seedCurated();
-        }
-      };
-      load();
+      setIsLoaded(true);
+      return;
     }
-    setIsLoaded(true);
-  }, []);
+
+    const load = async () => {
+      try {
+        const res = await api.get('/leetcode');
+        let list: Problem[] = Array.isArray(res.data) ? normalizeProblems(res.data) : [];
+
+        if (!list.length) {
+          const seeded = await seedDefaultProblems();
+          if (seeded) {
+            const seededRes = await api.get('/leetcode');
+            list = Array.isArray(seededRes.data) ? normalizeProblems(seededRes.data) : [];
+          }
+        }
+
+        setProblems(list);
+      } catch (error) {
+        console.error('Failed to load LeetCode problems:', error);
+        setProblems([]);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    load();
+  }, [guest]);
 
   useEffect(() => {
     if (guest && isLoaded) localStorage.setItem('guest-lc', JSON.stringify(problems));
-  }, [problems, isLoaded]);
+  }, [guest, problems, isLoaded]);
 
   const normalizedStatus = (status?: Problem['status']) => (status === 'solved' ? 'solved' : 'todo');
   const solvedCount = problems.filter((p) => normalizedStatus(p.status) === 'solved').length;
@@ -140,9 +194,14 @@ export default function LeetCode() {
       setDifficulty('easy');
     } else {
       try {
-        const res = await api.post('/leetcode', { problemId: title.toLowerCase().replace(/\s+/g, '-'), title, difficulty, url, status: 'todo' });
-        const p = res.data;
-        setProblems((prev) => [{ id: p._id, title: p.title, url: p.url, difficulty: p.difficulty, status: p.status }, ...prev]);
+        const res = await api.post('/leetcode', { problemId: toProblemId(title), title, difficulty, url, status: 'todo' });
+        const [saved] = normalizeProblems([res.data]);
+        if (saved) {
+          setProblems((prev) => {
+            const filtered = prev.filter((problem) => problem.id !== saved.id);
+            return [saved, ...filtered];
+          });
+        }
         setTitle('');
         setUrl('');
         setDifficulty('easy');

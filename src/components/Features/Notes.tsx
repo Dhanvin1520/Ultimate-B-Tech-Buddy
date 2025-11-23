@@ -16,30 +16,35 @@ export default function Notes() {
 
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const GUEST_NOTE_KEY = 'guest-notes';
+  const LEGACY_NOTE_KEY = 'my-notes';
+
+  const normalizeNotes = (raw: any[]): Note[] =>
+    raw
+      .filter(Boolean)
+      .map((note: any, index: number) => ({
+        id: String(note?._id || note?.id || `note-${index}`),
+        content: note?.content || note?.title || '',
+        createdAt: note?.updatedAt || note?.createdAt || new Date().toISOString(),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   useEffect(() => {
-    const normalizeNotes = (raw: any[]): Note[] =>
-      raw
-        .filter(Boolean)
-        .map((note: any, index: number) => ({
-          id: String(note?._id || note?.id || `note-${index}`),
-          content: note?.content || note?.title || '',
-          createdAt: note?.updatedAt || note?.createdAt || new Date().toISOString(),
-        }))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const storedNotes = localStorage.getItem('my-notes');
-    if (storedNotes) {
-      try {
-        setNotes(normalizeNotes(JSON.parse(storedNotes)));
-      } catch {
-        // ignore malformed cache
-      }
-    }
-
     if (guest) {
+      const storedNotes = localStorage.getItem(GUEST_NOTE_KEY) || localStorage.getItem(LEGACY_NOTE_KEY);
+      if (storedNotes) {
+        try {
+          setNotes(normalizeNotes(JSON.parse(storedNotes)));
+        } catch {
+          // ignore malformed cache
+        }
+      }
       setIsLoaded(true);
       return;
     }
+
+    localStorage.removeItem(GUEST_NOTE_KEY);
+    localStorage.removeItem(LEGACY_NOTE_KEY);
 
     const load = async () => {
       try {
@@ -57,10 +62,10 @@ export default function Notes() {
   }, [guest]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('my-notes', JSON.stringify(notes));
+    if (guest && isLoaded) {
+      localStorage.setItem(GUEST_NOTE_KEY, JSON.stringify(notes));
     }
-  }, [notes, isLoaded]);
+  }, [guest, notes, isLoaded]);
 
   const addNote = async (content: string) => {
     const trimmed = content.trim();

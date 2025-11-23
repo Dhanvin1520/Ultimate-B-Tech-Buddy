@@ -57,6 +57,10 @@ function App() {
       localStorage.removeItem('guest');
       localStorage.removeItem('activeSection');
       localStorage.removeItem('chat_name');
+      localStorage.removeItem('guest-lc');
+      localStorage.removeItem('guest-tasks');
+      localStorage.removeItem('guest-notes');
+      localStorage.removeItem('my-notes');
 
     }
   };
