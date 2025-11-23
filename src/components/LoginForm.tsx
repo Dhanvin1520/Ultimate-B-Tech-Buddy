@@ -93,7 +93,7 @@ export default function LoginForm({ setIsAuthenticated }: LoginFormProps) {
             <div className="w-3 h-3 rounded-full bg-green-500/80" />
           </div>
           <div className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
-            user@btech-buddy:~/auth
+          user@collabforge:~/auth
           </div>
           <div className="w-10" /> 
         </div>

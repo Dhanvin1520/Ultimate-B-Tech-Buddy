@@ -28,7 +28,7 @@ export default function SidebarTodo({ onItemsChange, initialOpen = true }: Sideb
   const [text, setText] = useState<string>('')
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium')
   const [open, setOpen] = useState(initialOpen);
-  const guest = localStorage.getItem('guest') === 'true';
+  const [guest, setGuest] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('guest') === 'true'));
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setText(e.target.value);
@@ -39,24 +39,42 @@ export default function SidebarTodo({ onItemsChange, initialOpen = true }: Sideb
   };
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setGuest(localStorage.getItem('guest') === 'true');
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (guest) {
-      const s = localStorage.getItem('sidebar-todos')
-      if (s) setItems(JSON.parse(s))
-      return
+      const stored = localStorage.getItem('sidebar-todos') || localStorage.getItem('guest-tasks');
+      if (stored) {
+        try {
+          setItems(JSON.parse(stored));
+        } catch {
+          setItems([]);
+        }
+      } else {
+        setItems([]);
+      }
+      return;
     }
     const load = async () => {
       try {
-        const res = await api.get('/tasks')
-        const list: Item[] = res.data.map((t: any) => ({ id: t._id, content: t.title, priority: (t.priority || 'medium'), completed: !!t.completed }))
-        setItems(list)
-      } catch { }
-    }
-    load()
-  }, [])
+        const res = await api.get('/tasks');
+        const list: Item[] = res.data.map((t: any) => ({ id: t._id, content: t.title, priority: (t.priority || 'medium'), completed: !!t.completed }));
+        setItems(list);
+      } catch {
+        setItems([]);
+      }
+    };
+    load();
+  }, [guest]);
 
   useEffect(() => {
-    if (guest) localStorage.setItem('sidebar-todos', JSON.stringify(items))
-  }, [items])
+    if (guest && typeof window !== 'undefined') {
+      localStorage.setItem('sidebar-todos', JSON.stringify(items));
+    }
+  }, [items, guest])
 
   useEffect(() => {
     onItemsChange?.(items);

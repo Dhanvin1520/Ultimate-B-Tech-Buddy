@@ -333,7 +333,7 @@ export default function Chat() {
     <div className="swiss-card flex flex-col flex-1 p-0 overflow-hidden h-[calc(100vh-7rem)]">
       <div className="flex flex-wrap items-center justify-between gap-4 p-6 border-b border-[var(--border-color)] bg-[var(--bg-panel)]">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">Ultimate B-Tech Buddy</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-1">CollabForge</p>
           <h2 className="heading-lg">NST Community Chat</h2>
         </div>
         <div className={`px-3 py-1 text-xs font-bold uppercase tracking-widest border ${connected ? 'border-green-600 text-green-600' : 'border-red-600 text-red-600'}`}>

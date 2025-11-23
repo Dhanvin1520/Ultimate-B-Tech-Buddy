@@ -13,6 +13,7 @@ import LeetCode from '../Features/LeetCode';
 import Spotify from '../Features/Spotify';
 import Resume from '../Features/Resume';
 import Games from '../Features/Games';
+import Tasks from '../Features/Tasks';
 
 interface DashboardProps {
   setIsAuthenticated: (value: boolean) => void;
@@ -35,6 +36,8 @@ export default function Dashboard({ setIsAuthenticated }: DashboardProps) {
         return <Home setActiveSection={handleSetActiveSection} />;
       case 'Chat':
         return <Chat key="chat" />;
+      case 'Tasks':
+        return <Tasks />;
       case 'Notes':
         return <Notes />;
       case 'Calendar':
@@ -74,8 +77,8 @@ export default function Dashboard({ setIsAuthenticated }: DashboardProps) {
       <main className="flex-1 overflow-y-auto relative w-full">
         <div className="md:hidden p-4 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-panel)] sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-bold text-xs">B</div>
-            <span className="font-bold text-lg">BTech Buddy</span>
+            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-bold text-[10px] tracking-tight">CF</div>
+            <span className="font-bold text-lg">CollabForge</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(true)}

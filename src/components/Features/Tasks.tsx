@@ -6,48 +6,89 @@ type Task = {
   id: string;
   content: string;
   completed: boolean;
+  createdAt: string;
 };
+
+const normalizeTask = (task: any): Task => ({
+  id: String(task?.id || task?._id || crypto.randomUUID()),
+  content: task?.content || task?.title || task?.text || 'Untitled Task',
+  completed: Boolean(task?.completed),
+  createdAt: (() => {
+    const source = task?.createdAt || task?.updatedAt || task?.timestamp;
+    if (source) {
+      const date = new Date(source);
+      if (!Number.isNaN(date.getTime())) return date.toISOString();
+    }
+    return new Date().toISOString();
+  })(),
+});
 
 export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState('');
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const guest = localStorage.getItem('guest') === 'true';
+  const guest = typeof window !== 'undefined' && localStorage.getItem('guest') === 'true';
 
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (guest) {
-      const stored = localStorage.getItem('guest-tasks');
-      if (stored) setTasks(JSON.parse(stored));
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('guest-tasks') : null;
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setTasks(parsed.map(normalizeTask));
+          }
+        } catch {
+          setTasks([]);
+        }
+      } else {
+        setTasks([]);
+      }
     } else {
       const load = async () => {
         try {
           const res = await api.get('/tasks');
-          const list: Task[] = res.data.map((t: any) => ({ id: t._id, content: t.title, completed: !!t.completed }));
+          const list: Task[] = Array.isArray(res.data) ? res.data.map(normalizeTask) : [];
           setTasks(list);
-        } catch { }
+        } catch {
+          setTasks([]);
+        }
       };
       load();
     }
     setIsLoaded(true);
-  }, []);
+  }, [guest]);
 
   useEffect(() => {
-    if (guest && isLoaded) localStorage.setItem('guest-tasks', JSON.stringify(tasks));
-  }, [tasks, isLoaded]);
+    if (!isLoaded) return;
+    if (guest && typeof window !== 'undefined') {
+      const payload = tasks.map((task) => ({
+        id: task.id,
+        content: task.content,
+        text: task.content,
+        completed: task.completed,
+        createdAt: task.createdAt,
+      }));
+      localStorage.setItem('guest-tasks', JSON.stringify(payload));
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('tasks-updated'));
+    }
+  }, [tasks, guest, isLoaded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newTask.trim()) {
       if (guest) {
-        const newTaskItem: Task = { id: crypto.randomUUID(), content: newTask, completed: false };
-        setTasks((prev) => [...prev, newTaskItem]);
+        const newTaskItem: Task = { id: crypto.randomUUID(), content: newTask.trim(), completed: false, createdAt: new Date().toISOString() };
+        setTasks((prev) => [newTaskItem, ...prev]);
       } else {
         try {
-          const res = await api.post('/tasks', { title: newTask, completed: false });
+          const res = await api.post('/tasks', { title: newTask.trim(), completed: false });
           const t = res.data;
-          setTasks((prev) => [...prev, { id: t._id, content: t.title, completed: !!t.completed }]);
+          setTasks((prev) => [normalizeTask(t), ...prev]);
         } catch { }
       }
       setNewTask('');

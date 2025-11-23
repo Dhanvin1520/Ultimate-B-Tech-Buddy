@@ -11,7 +11,7 @@ interface Message {
 
 const INITIAL_MESSAGE: Message = {
   id: '1',
-  text: `👋 Hey! I'm your BTech Buddy AI powered by Gemini.\nAsk me anything about tech, code, or career!`,
+  text: `👋 Hey! I'm CollabForge AI powered by Gemini.\nAsk me anything about tech, code, or career!`,
   isUser: false,
   timestamp: new Date(),
 };
@@ -106,7 +106,7 @@ export default function Chatbot() {
       {/* Chatbot Container - Fixed position, expands in place */}
       <div
         role="dialog"
-        aria-label="BTech Buddy chat"
+        aria-label="CollabForge chat"
         aria-expanded={isExpanded}
         className={`fixed bottom-6 right-6 z-50 transition-all duration-[800ms] ease-in-out ${isExpanded
             ? 'w-[450px] h-[650px]'
@@ -133,7 +133,7 @@ export default function Chatbot() {
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
                 <Bot className="text-[var(--accent-color)] w-6 h-6" />
               </div>
-              <span className="text-white font-bold text-lg">BTech Buddy AI</span>
+              <span className="text-white font-bold text-lg">CollabForge AI</span>
             </div>
             <button
               onClick={(e) => {
@@ -158,7 +158,7 @@ export default function Chatbot() {
                   <Bot className="text-[var(--accent-color)] w-6 h-6" />
                 </div>
                 <div className="flex flex-col text-left text-white">
-                  <span className="text-lg font-bold leading-none">BTech Buddy AI</span>
+                  <span className="text-lg font-bold leading-none">CollabForge AI</span>
                   <span className="text-[10px] font-mono uppercase tracking-wide opacity-90">Powered by Gemini</span>
                 </div>
               </div>
