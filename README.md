@@ -1,4 +1,4 @@
-# 🎓 Ultimate B-Tech Buddy
+# 🎓 Unified Virtual Study Collaboration Workspace 
 
 > Your all-in-one productivity companion for engineering students - study smarter, not harder!
 
